@@ -1,3 +1,14 @@
+/*
+ * CONTROLE FINANCEIRO | JavaScript da interface
+ *
+ * IMPORTANTE: esta é uma versão comentada do protótipo recebido.
+ * Os dados ainda são carregados/salvos no localStorage do navegador.
+ * Para usar MySQL, essas operações serão substituídas por chamadas fetch()
+ * a arquivos PHP (API), que executam consultas preparadas via PDO.
+ * Nunca coloque credenciais do MySQL neste arquivo JavaScript.
+ */
+
+// Dados fictícios iniciais para demonstração. Na versão conectada, virão da tabela lancamento.
 const defaultExpenses=[
     {
         id:1,
@@ -95,6 +106,7 @@ const defaultExpenses=[
     }
 ];
 
+// Metas de exemplo. Na versão conectada, virão da tabela meta.
 const defaultGoals=[
     {
         id:1,
@@ -130,6 +142,7 @@ const defaultGoals=[
         due:'2028-08-01'
     }
 ];
+// Categorias de demonstração. Na versão conectada, virão da tabela categoria.
 const categoriesDefault=[
     'Alimentação',
     'Supermercado',
@@ -140,7 +153,9 @@ const categoriesDefault=[
     'Saúde',
     'Outros'
 ];
-let expenses=load('cf_expenses',defaultExpenses),
+// Estado mantido em memória enquanto a página está aberta. Hoje a persistência é localStorage.
+// Depois da integração, expenses/goals/categories/user serão preenchidos por respostas da API PHP.
+let expenses= [],
     goals=load('cf_goals',defaultGoals),
     categories=load('cf_categories',categoriesDefault),
     user=load('cf_user',{name:'Usuário',email:''}),
@@ -149,39 +164,84 @@ let expenses=load('cf_expenses',defaultExpenses),
     paymentFilter='',
     searchTerm='';
 
+// Recupera dados do localStorage; é armazenamento apenas neste navegador, não no MySQL.
 function load(k,d){try{const v=localStorage.getItem(k);
     return v?JSON.parse(v):JSON.parse(JSON.stringify(d))}
     catch(e){return JSON.parse(JSON.stringify(d))}}
+// Salva o estado atual no localStorage. Será substituída por POST/PUT/DELETE para a API PHP.
 function save(){localStorage.setItem('cf_expenses',JSON.stringify(expenses));
     localStorage.setItem('cf_goals',JSON.stringify(goals));
     localStorage.setItem('cf_categories',JSON.stringify(categories));
     localStorage.setItem('cf_user',JSON.stringify(user))}
+async function loadExpensesFromDatabase(){
+    try{
+        //Solicita os lançamentos ao PHP.
+        const resposta = await fetch(
+            'api/lancamentos/listar.php'
+        );
+
+        //Converte a resposta para JSON.
+        const resultado = await resposta.json();
+
+        //Verifica se houve erro.
+        if (!resposta.ok || !resultado.sucesso){
+            throw new Error(
+                resultado.erro || 'Erro ao carregar lançamentos.'
+            );
+        }
+
+        // Atualiza o array com os dados do banco.
+        expenses = resultado.lancamentos;
+
+        //Atualiza a interface.
+        render();
+
+        // Atualiza a meta visual do menu.
+        updateMini();
+
+    } catch (erro){
+        console.error('Erro ao carregar gastos:', erro);
+
+        toast(erro.message);
+    }
+}
+// Formata números como valores monetários em Real brasileiro.
 function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+// Escapa caracteres HTML para reduzir risco de injeção ao montar trechos de HTML.
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+// Retorna a data atual no formato AAAA-MM-DD, adequado para input type=date.
 function todayISO(){return new Date().toISOString().slice(0,10)}
+// Converte uma data AAAA-MM-DD para o formato brasileiro de exibição.
 function prettyDate(s){if(!s)return '—';return new Date(s+'T12:00:00').toLocaleDateString('pt-BR')}
+// Soma o campo value de uma lista de lançamentos. Cálculo, não dado persistido.
 function total(arr){return arr.reduce((a,e)=>a+Number(e.value||0),0)}
+// Exibe uma mensagem temporária na interface.
 function toast(t){let x=document.getElementById('toast');
     x.textContent=t;
     x.classList.add('show');
     setTimeout(()=>x.classList.remove('show'),2400)
 }
 
+// Inicialização visual do cabeçalho: data do dia e nome do usuário local.
 document.getElementById('today').textContent=new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'});
 document.getElementById('userLabel').textContent=user.name||'Usuário';
 
+// Troca a tela ativa, limpa o filtro de pagamento e redesenha o conteúdo.
 function setPage(p){page=p;paymentFilter='';document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render()}
 
+// Liga os botões do menu às telas correspondentes.
 document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>setPage(b.dataset.page));
 document.querySelectorAll('[data-filter-pay]').forEach(b=>b.onclick=()=>{paymentFilter=b.dataset.filterPay;page='expenses';
 document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.page==='expenses')); render()});
 
+// Monta o cabeçalho reutilizável das páginas internas.
 function head(title,sub,button=''){return `
     <div class="pagehead">
         <div><h1>${title}</h1><p>${sub}</p>
         </div>${button}
     </div>`}
 
+// Gera um cartão de indicador/resumo. Os valores são calculados antes de chamar esta função.
 function stat(label,value,note,ico)
     {return `
         <div class="card">
@@ -192,6 +252,7 @@ function stat(label,value,note,ico)
             <div class="stat-note">${note}</div>
         </div>`}
 
+// Constrói as linhas da tabela de lançamentos, incluindo ações de editar e excluir.
 function expenseRows(arr){if(!arr.length)return `<tr><td colspan="8" class="empty">Nenhum lançamento encontrado.</td></tr>`;
     return arr.map(e=>`<tr><td>
         <div class="item-name">
@@ -210,12 +271,15 @@ function expenseRows(arr){if(!arr.length)return `<tr><td colspan="8" class="empt
         </td>
     </tr>`).join('')}
 
+// Escolhe um ícone visual para cada categoria; não é informação financeira obrigatória.
 function iconFor(c){return ({Alimentação:'♨',Supermercado:'▣',Vestuário:'◇',Lazer:'◉',Transporte:'↗',Moradia:'⌂',Saúde:'✚',Outros:'◆'})[c]||'◆'}
 
-function expenseTable(arr){return 
-    `<div class="card table-wrap">
+// Monta a tabela completa de lançamentos usando expenseRows().
+function expenseTable(arr){
+    return `
+    <div class="card table-wrap">
         <table><thead><tr>
-        th>DESCRIÇÃO</th>
+        <th>DESCRIÇÃO</th>
         <th>VALOR</th>
         <th>DATA</th>
         <th>QUEM GASTOU</th>
@@ -227,6 +291,7 @@ function expenseTable(arr){return
         </table>
     </div>`}
 
+// Aplica os filtros atuais de forma de pagamento e texto pesquisado.
 function filtered(){
     return expenses.filter(e=>(
         !paymentFilter||
@@ -235,6 +300,7 @@ function filtered(){
         (!searchTerm||
         (e.description+' '+e.category+' '+e.who+' '+e.payment).toLowerCase().includes(searchTerm.toLowerCase())))}
 
+// Renderiza o painel inicial. Atenção: renda e limite mensal estão fixos como valores de demonstração.
 function homePage(){let sum=total(expenses),
     month=expenses.filter(e=>e.date.slice(0,7)===todayISO().slice(0,7)),
     monthSum=total(month),
@@ -289,8 +355,10 @@ function homePage(){let sum=total(expenses),
             </div>
         </div>`}
 
-function expenseTableMini(arr){return 
-    `<div class="table-wrap">
+// Tabela compacta dos lançamentos mais recentes exibida no painel inicial.
+function expenseTableMini(arr){
+    return `
+    <div class="table-wrap">
         <table><thead><tr>
             <th>LANÇAMENTO</th>
             <th>DATA</th>
@@ -307,6 +375,7 @@ function expenseTableMini(arr){return
         </table>
     </div>`}
 
+// Calcula e desenha barras de gastos por categoria a partir dos lançamentos carregados.
 function categoryBars(){let sums=categories.map(c=>({name:c,value:total(expenses.filter(e=>e.category===c))})).sort((a,b)=>b.value-a.value).filter(x=>x.value>0);
 if(!sums.length)return '<p class="muted">Adicione lançamentos para ver os dados.</p>';
 let max=Math.max(...sums.map(x=>x.value));
@@ -322,6 +391,7 @@ let max=Math.max(...sums.map(x=>x.value));
         </div>`).join('')}
     </div>`}
 
+// Renderiza a tela de lançamentos, seus indicadores e controles de filtro.
 function expensesPage(){let arr=filtered().slice().sort((a,b)=>b.date.localeCompare(a.date));
     return `${head('Lançamentos','Organize e acompanhe todas as suas despesas.',
         `<button class="btn primary" onclick="openExpense()">＋ Novo lançamento</button>`)}
@@ -350,6 +420,7 @@ function expensesPage(){let arr=filtered().slice().sort((a,b)=>b.date.localeComp
         </div>
         <div id="expenseTable">${expenseTable(arr)}</div>`}
 
+// Renderiza relatórios e gráficos. Os totais são derivados dos lançamentos, não armazenados à parte.
 function reportsPage(){let sum=total(expenses),
     month=expenses.filter(e=>e.date.slice(0,7)===todayISO().slice(0,7)),
     byPay=[
@@ -411,6 +482,7 @@ function reportsPage(){let sum=total(expenses),
             </div>
         </div>`}
 
+// Desenha os gráficos nos elementos canvas usando os lançamentos em memória.
 function drawCharts(){['lineChart','barChart'].forEach((id,idx)=>{
     let c=document.getElementById(id);if(!c)return;
     let r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=r.width*dpr;c.height=r.height*dpr;
@@ -441,6 +513,7 @@ function drawCharts(){['lineChart','barChart'].forEach((id,idx)=>{
                 x.font='10px Arial';
                 x.textAlign='center';
                 x.fillText(labels[i],xx(i),h-5)})}})}
+// Renderiza gerenciamento de categorias, uso e totais por categoria.
 function categoriesPage(){
     return `${head(
         'Categorias',
@@ -473,6 +546,7 @@ function categoriesPage(){
                 <button onclick="removeCategory('${esc(c).replace(/'/g,"\\'")}')">⌫</button></td></tr>`).join('')}</tbody></table>
             </div>
         </div>`}
+// Renderiza metas e progresso. Valores de renda fixa/variável ainda são exemplos fixos.
 function goalsPage(){
     let fixed=goals.filter(g=>g.name.toLowerCase().includes('salário')||g.name.toLowerCase().includes('fixo')).reduce((a,g)=>a+g.target,0)||2850,variable=1250;
     return `${head('Metas','Defina seus objetivos e acompanhe seu progresso.',`<button class="btn primary" onclick="openGoal()">＋ Criar nova meta</button>`)}
@@ -509,6 +583,7 @@ function goalsPage(){
             </div>
                 </div>`}).join(''):'<div class="empty">Você ainda não criou metas.</div>'}
             </div>`}
+// Renderiza preferências, perfil e ações de exportação/limpeza do protótipo local.
 function settingsPage(){
     return `${head('Configurações','Personalize sua experiência e gerencie suas preferências.')}
     <div class="grid settings-layout">
@@ -519,7 +594,7 @@ function settingsPage(){
                     <div><strong>Aparência</strong><small>Escolha o tema visual do aplicativo</small></div>
                     <span class="tag">Bege + verde</span>
                 </div>
-                div class="setting-row">
+                <div class="setting-row">
                     <div><strong>Notificações</strong><small>Gerencie avisos e lembretes</small></div>
                     <label><input type="checkbox" id="notifications" checked> Ativas</label>
                 </div>
@@ -573,6 +648,7 @@ function settingsPage(){
         </div>
     </div>`}
 
+// Decide qual função de página executar e registra os eventos dos filtros/gráficos.
 function render(){
     let el=document.getElementById('page');el.innerHTML=({
         home:homePage,
@@ -596,9 +672,12 @@ function render(){
                         if(page==='reports'){drawCharts();
                             document.getElementById('reportPeriod').onchange=e=>toast('Visualização selecionada: '+e.target.value)}}
 
+// Limpa os filtros de pesquisa e pagamento e redesenha a tela de lançamentos.
 function resetFilters(){searchTerm='';
     paymentFilter='';
-    render()}function openExpense(id=null){editingId=id;
+    render()}// Abre o formulário de lançamento. Se receber ID, preenche os campos para edição.
+function openExpense(id=null){
+        editingId=id;
         let f=document.getElementById('expenseForm');
         f.reset();
         document.getElementById('expenseCategory').innerHTML=categories.map(c=>`<option>${esc(c)}</option>`).join('');
@@ -609,46 +688,205 @@ function resetFilters(){searchTerm='';
             if(e){f.elements.description.value=e.description;f.elements.value.value=e.value;f.elements.date.value=e.date;f.elements.category.value=e.category;
                 f.elements.payment.value=e.payment;f.elements.who.value=e.who;f.elements.place.value=e.place;f.elements.installments.value=e.installments}}
                 document.getElementById('modalBack').classList.add('show')}
-        function editExpense(id){openExpense(id)}
-        function deleteExpense(id){if(confirm('Deseja excluir este lançamento?')){expenses=expenses.filter(e=>e.id!==id);
-            save();
-            render();
-            updateMini();
-            toast('Lançamento excluído.')}}
-        document.getElementById('closeModal').onclick=document.getElementById('cancelModal').onclick=()=>
-            document.getElementById('modalBack').classList.remove('show');document.getElementById('expenseForm').onsubmit=e=>
-                {e.preventDefault();let f=e.target,old=expenses.find(x=>x.id===editingId),
-                    entry={id:editingId||Date.now(),description:f.elements.description.value.trim(),value:Number(f.elements.value.value),date:f.elements.date.value,
-                        category:f.elements.category.value,who:f.elements.who.value.trim()||'Eu',payment:f.elements.payment.value,place:f.elements.place.value,
-                        installments:f.elements.installments.value};
-                        if(old)expenses=expenses.map(x=>x.id===editingId?entry:x);
-                        else expenses.push(entry);
-                        save();
-                        document.getElementById('modalBack').classList.remove('show');
-                        render();
-                        updateMini();
-                        toast(old?'Lançamento atualizado!':'Lançamento salvo!')};
+        // Encaminha a edição para openExpense() com o identificador selecionado.
+function editExpense(id){openExpense(id)}
 
+// ==========================================
+// EXCLUIR LANÇAMENTO
+// ==========================================
+
+async function deleteExpense(id) {
+
+    // Localiza o lançamento selecionado.
+    const lancamento = expenses.find(
+        e => Number(e.id) === Number(id)
+    );
+
+    // Solicita confirmação.
+    if (!confirm(
+        `Deseja excluir o lançamento "${lancamento?.description || id}"?`
+    )) {
+        return;
+    }
+
+    try {
+
+        // Prepara os dados para enviar ao PHP.
+        const dados = new FormData();
+
+        dados.append('id', id);
+
+        // Envia a solicitação de exclusão.
+        const resposta = await fetch(
+            'api/lancamentos/excluir.php',
+            {
+                method: 'POST',
+                body: dados
+            }
+        );
+
+        // Recebe a resposta do PHP.
+        const texto = await resposta.text();
+
+        let resultado;
+
+        // Converte a resposta para JSON.
+        try {
+            resultado = JSON.parse(texto);
+        } catch (erro) {
+
+            console.error('Resposta do PHP:', texto);
+
+            throw new Error(
+                'O PHP retornou uma resposta inválida.'
+            );
+        }
+
+        // Verifica se a operação foi realizada.
+        if (!resposta.ok || !resultado.sucesso) {
+            throw new Error(
+                resultado.erro || 'Erro ao excluir lançamento.'
+            );
+        }
+
+        // Exibe a confirmação.
+        toast(resultado.mensagem);
+
+        // Atualiza os registros consultando o MySQL.
+        await loadExpensesFromDatabase();
+
+    } catch (erro) {
+
+        console.error('Erro ao excluir:', erro);
+
+        toast(erro.message);
+    }
+}
+
+document.getElementById('closeModal').onclick=document.getElementById('cancelModal').onclick=()=>
+document.getElementById('modalBack').classList.remove('show');
+
+// ==========================================
+// CADASTRAR OU EDITAR LANÇAMENTO
+// ==========================================
+
+document.getElementById('expenseForm').onsubmit = async (e) => {
+
+    // Impede o recarregamento da página.
+    e.preventDefault();
+
+    const form = e.currentTarget;
+
+    // Captura os dados do formulário.
+    const dados = new FormData(form);
+
+    // Verifica se estamos editando ou cadastrando.
+    const editando = editingId !== null;
+
+    // Define qual arquivo PHP será chamado.
+    const url = editando
+        ? 'api/lancamentos/editar.php'
+        : 'api/lancamentos/criar.php';
+
+    // Se for edição, adiciona o ID do lançamento.
+    if (editando) {
+        dados.append('id', editingId);
+    }
+
+    try {
+
+        // Envia os dados para o PHP.
+        const resposta = await fetch(url, {
+            method: 'POST',
+            body: dados
+        });
+
+        // Recebe a resposta.
+        const texto = await resposta.text();
+
+        let resultado;
+
+        // Converte a resposta para JSON.
+        try {
+            resultado = JSON.parse(texto);
+        } catch (erro) {
+
+            console.error('Resposta do PHP:', texto);
+
+            throw new Error(
+                'O PHP retornou uma resposta inválida.'
+            );
+        }
+
+        // Verifica se houve algum erro.
+        if (!resposta.ok || !resultado.sucesso) {
+            throw new Error(
+                resultado.erro || 'Não foi possível salvar.'
+            );
+        }
+
+        // Fecha o modal.
+        document.getElementById('modalBack')
+            .classList.remove('show');
+
+        // Limpa o formulário.
+        form.reset();
+
+        // Limpa o ID de edição.
+        editingId = null;
+
+        // Exibe a mensagem correspondente.
+        toast(resultado.mensagem);
+
+        // Atualiza os dados consultando o MySQL.
+        await loadExpensesFromDatabase();
+
+    } catch (erro) {
+
+        console.error('Erro ao salvar lançamento:', erro);
+
+        toast(erro.message);
+
+    }
+
+};     
+            // e.preventDefault();let f=e.target,old=expenses.find(x=>x.id===editingId),
+            //     entry={id:editingId||Date.now(),description:f.elements.description.value.trim(),value:Number(f.elements.value.value),date:f.elements.date.value,
+            //         category:f.elements.category.value,who:f.elements.who.value.trim()||'Eu',payment:f.elements.payment.value,place:f.elements.place.value,
+            //         installments:f.elements.installments.value};
+                    // if(old)expenses=expenses.map(x=>x.id===editingId?entry:x);
+                    // else expenses.push(entry);
+                    // save();
+                    // 
+                    // render();
+                    // updateMini();
+                    // toast(old?'Lançamento atualizado!':'Lançamento salvo!')};
+
+// Atualiza a barra lateral com o gasto do mês e o limite mensal demonstrativo.
 function updateMini(){
     let spent=total(expenses.filter(e=>e.date.startsWith(todayISO().slice(0,7)))),
     goal=3500;document.getElementById('mini-progress').style.width=Math.min(100,spent/goal*100)+'%';
     document.getElementById('mini-note').textContent=spent<goal?money(goal-spent)+' restantes':money(spent-goal)+' acima do limite'}
-    function addCategory(){let n=prompt('Nome da nova categoria:');
+    // Solicita o nome e adiciona uma categoria ao estado local.
+function addCategory(){let n=prompt('Nome da nova categoria:');
         if(n&&n.trim()&&!categories.includes(n.trim())){categories.push(n.trim());
             save();
             render();
             toast('Categoria adicionada.')}}
-        function renameCategory(c){let n=prompt('Novo nome para '+c+':',c);
+        // Renomeia uma categoria e atualiza os lançamentos que usam o nome antigo.
+function renameCategory(c){let n=prompt('Novo nome para '+c+':',c);
             if(n&&n.trim()&&n.trim()!==c){categories=categories.map(x=>x===c?n.trim():x);
                 expenses=expenses.map(e=>e.category===c?{...e,category:n.trim()}:e);
                 save();
                 render();
                 toast('Categoria renomeada.')}}
-            function removeCategory(c){if(expenses.some(e=>e.category===c))
+            // Impede remover categoria em uso; caso contrário, remove do estado local.
+function removeCategory(c){if(expenses.some(e=>e.category===c))
                 {alert('Esta categoria possui lançamentos. Reatribua ou exclua esses lançamentos antes de removê-la.');
                     return}if(confirm('Remover a categoria '+c+'?')){categories=categories.filter(x=>x!==c);
                         save();
                         render()}}
+// Abre e prepara o formulário de criação de meta.
 function openGoal(){document.getElementById('goalForm').reset();
     document.getElementById('goalForm').elements.due.value=todayISO();
     document.getElementById('goalModalBack').classList.add('show')}document.getElementById('closeGoal').onclick=document.getElementById('cancelGoal').onclick=()=>
@@ -657,14 +895,17 @@ function openGoal(){document.getElementById('goalForm').reset();
         let f=e.target;goals.push({id:Date.now(),name:f.elements.name.value.trim(),target:Number(f.elements.target.value),saved:Number(f.elements.saved.value),
             due:f.elements.due.value,icon:f.elements.icon.value});save();
             document.getElementById('goalModalBack').classList.remove('show');render();toast('Meta criada!')};
-            function editGoal(id){let g=goals.find(x=>x.id===id),n=prompt('Quanto você já guardou para '+g.name+'? (R$)',g.saved);
+            // Atualiza o valor acumulado de uma meta selecionada.
+function editGoal(id){let g=goals.find(x=>x.id===id),n=prompt('Quanto você já guardou para '+g.name+'? (R$)',g.saved);
                 if(n!==null&&Number.isFinite(Number(n))&&Number(n)>=0){g.saved=Number(n);
                     save();
                     render();
                     toast('Progresso atualizado.')}}
-                    function deleteGoal(id){if(confirm('Excluir esta meta?')){goals=goals.filter(g=>g.id!==id);
+                    // Confirma e remove uma meta do estado local.
+function deleteGoal(id){if(confirm('Excluir esta meta?')){goals=goals.filter(g=>g.id!==id);
                         save();
                         render()}}
+// Edita nome/e-mail localmente. Na versão real, os dados virão da sessão e tabela usuario.
 function editProfile(){
     let n=prompt('Seu nome:',user.name||'');
     if(n===null)return;
@@ -674,10 +915,12 @@ function editProfile(){
     save();
     render();
     toast('Perfil atualizado.')}
-    function exportData(){let blob=new Blob([JSON.stringify({expenses,goals,categories,user},null,2)],{type:'application/json'}),a=document.createElement('a');
+    // Exporta os dados que estão no navegador para um arquivo JSON.
+function exportData(){let blob=new Blob([JSON.stringify({expenses,goals,categories,user},null,2)],{type:'application/json'}),a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
     a.download='controle-financeiro-dados.json';a.click();URL.revokeObjectURL(a.href);toast('Exportação iniciada.')}
-    function clearData(){if(confirm('Isso apagará todos os dados locais deste protótipo. Deseja continuar?')){localStorage.removeItem('cf_expenses');
+    // Apaga os dados de demonstração do localStorage; não apaga dados do MySQL.
+function clearData(){if(confirm('Isso apagará todos os dados locais deste protótipo. Deseja continuar?')){localStorage.removeItem('cf_expenses');
         localStorage.removeItem('cf_goals');
         localStorage.removeItem('cf_categories');
         expenses=[];
@@ -686,6 +929,8 @@ function editProfile(){
         render();
         updateMini();
         toast('Dados locais apagados.')}}
+// LOGIN FICTÍCIO: aceita qualquer e-mail/senha e apenas simula a entrada.
+// Deve ser substituído por autenticação PHP com password_hash/password_verify e sessão.
 document.getElementById('loginForm').onsubmit=e=>{e.preventDefault();
     let f=e.target;user.email=f.elements.email.value;user.name=user.email.split('@')[0]||'Usuário';
     save();
@@ -695,3 +940,4 @@ document.getElementById('loginForm').onsubmit=e=>{e.preventDefault();
     window.addEventListener('resize',()=>{if(page==='reports')drawCharts()});
     updateMini();
     render();
+    loadExpensesFromDatabase();

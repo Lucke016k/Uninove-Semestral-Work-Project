@@ -1,3 +1,11 @@
+<?php
+/**
+ * Página principal do Controle Financeiro.
+ * A extensão .php permite acrescentar processamento no servidor.
+ * Neste estágio, o arquivo ainda entrega a interface; a conexão PDO
+ * ficará em config/conexao.php e será usada por endpoints PHP separados.
+ */
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -6,7 +14,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Estrutura principal do aplicativo: menu lateral e área de conteúdo. -->
     <div class="app">
+        <!-- Menu lateral: navegação, filtros rápidos de pagamento e resumo mensal. -->
         <aside class="sidebar">
             <div class="brand">
                 <div class="brand-icon">▣</div>
@@ -17,6 +27,7 @@
             </div>
             <div>
                 <div class="nav-label">Menu principal</div>
+                <!-- data-page identifica qual tela o JavaScript deve renderizar. -->
                 <nav class="nav" id="nav">
                     <button data-page="home" class="active">
                         <span class="ico">⌂</span>Início
@@ -45,6 +56,7 @@
             </div>
             <div>
                 <div class="nav-label">Formas de pagamento</div>
+                <!-- data-filter-pay aplica um filtro por forma de pagamento. -->
                 <nav class="nav">
                     <button data-filter-pay="Crédito">
                         <span class="ico">▣</span>
@@ -86,6 +98,7 @@
             </div>
         </aside>
 
+        <!-- Conteúdo principal; o JavaScript injeta aqui a tela selecionada. -->
         <main class="main">
             <div class="topbar">
                 <button class="pill" id="datePill">▦ 
@@ -96,15 +109,18 @@
                     <span id="userLabel">Usuário</span>
                 </button>
             </div>
+            <!-- Área dinâmica: Início, Lançamentos, Relatórios, Categorias, Metas ou Configurações. -->
             <section id="page"></section>
         </main>
     </div>
+    <!-- Modal de criação/edição de lançamento financeiro. -->
     <div class="modal-back" id="modalBack">
         <div class="modal">
             <div class="modal-head">
                 <h2 id="modalTitle">Novo lançamento</h2>
                 <button class="close" id="closeModal">×</button>
             </div>
+            <!-- Os names dos campos são lidos pelo JavaScript ao salvar o formulário. -->
             <form id="expenseForm">
                 <div class="form-grid">
                     <div class="form-group full">
@@ -161,6 +177,7 @@
             </form>
         </div>
     </div>
+    <!-- Modal para cadastrar uma meta financeira. -->
     <div class="modal-back" id="goalModalBack">
         <div class="modal">
             <div class="modal-head">
@@ -203,6 +220,7 @@
             </form>
         </div>
     </div>
+    <!-- Tela visual de login. O login atual é apenas demonstrativo e será substituído por autenticação PHP. -->
     <div class="login-page" id="loginPage">
         <div class="login-box">
             <div class="login-logo">▣</div>
@@ -222,6 +240,7 @@
             <div class="notice">Protótipo local: qualquer e-mail e senha permitem entrar.</div>
         </div>
     </div>
+    <!-- Mensagens temporárias de sucesso/erro exibidas pelo JavaScript. -->
     <div class="toast" id="toast"></div>
 
     <script src="script.js"></script>
