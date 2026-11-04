@@ -31,7 +31,7 @@ const defaultGoals = [
 
 let expenses = [];   // Vem de api/lancamentos/listar.php
 let categories = []; // Vem de api/categorias/listar.php: { id, name, global }
-let goals = load('cf_goals', defaultGoals);
+let goals = [];
 let user = load('cf_user', { name: 'Usuário', email: '' });
 let page = 'home';
 let editingId = null;
@@ -59,7 +59,6 @@ function load(chave, padrao) {
 
 // Salva metas e perfil no localStorage.
 function save() {
-    localStorage.setItem('cf_goals', JSON.stringify(goals));
     localStorage.setItem('cf_user', JSON.stringify(user));
 }
 
@@ -1020,45 +1019,267 @@ function openGoal() {
 
 $('closeGoal').onclick = $('cancelGoal').onclick = () => $('goalModalBack').classList.remove('show');
 
-$('goalForm').onsubmit = e => {
+// ==========================================
+// CADASTRAR META
+// ==========================================
+
+document.getElementById('goalForm').onsubmit = async (e) => {
+
     e.preventDefault();
 
-    const f = e.target;
+    const form = e.currentTarget;
 
-    goals.push({
-        id: Date.now(),
-        name: f.elements.name.value.trim(),
-        target: Number(f.elements.target.value),
-        saved: Number(f.elements.saved.value),
-        due: f.elements.due.value,
-        icon: f.elements.icon.value
-    });
+    // Captura os campos do formulário.
+    const dados = new FormData(form);
 
-    save();
-    $('goalModalBack').classList.remove('show');
-    render();
-    toast('Meta criada!');
+    try {
+
+        const resposta = await fetch(
+            'api/metas/criar.php',
+            {
+                method: 'POST',
+                body: dados
+            }
+        );
+
+        const texto = await resposta.text();
+
+        let resultado;
+
+        try {
+
+            resultado = JSON.parse(texto);
+
+        } catch (erro) {
+
+            console.error('Resposta do PHP:', texto);
+
+            throw new Error(
+                'O PHP retornou uma resposta inválida.'
+            );
+        }
+
+        if (!resposta.ok || !resultado.sucesso) {
+            throw new Error(
+                resultado.erro || 'Erro ao criar meta.'
+            );
+        }
+
+        // Fecha o modal.
+        document.getElementById('goalModalBack')
+            .classList.remove('show');
+
+        form.reset();
+
+        // Atualiza os dados consultando o MySQL.
+        await loadGoalsFromDatabase();
+
+        toast(resultado.mensagem);
+
+    } catch (erro) {
+
+        console.error('Erro ao criar meta:', erro);
+
+        toast(erro.message);
+    }
 };
 
-// Atualiza o valor acumulado de uma meta.
-function editGoal(id) {
-    const meta = goals.find(g => g.id === id);
-    const valor = prompt('Quanto você já guardou para ' + meta.name + '? (R$)', meta.saved);
+// ==========================================
+// ATUALIZAR PROGRESSO DA META
+// ==========================================
 
-    if (valor !== null && Number.isFinite(Number(valor)) && Number(valor) >= 0) {
-        meta.saved = Number(valor);
-        save();
-        render();
-        toast('Progresso atualizado.');
+async function editGoal(id) {
+
+    // Localiza a meta.
+    const meta = goals.find(
+        g => String(g.id) === String(id)
+    );
+
+    if (!meta) {
+        toast('Meta não encontrada.');
+        return;
+    }
+
+    // Solicita o novo valor acumulado.
+    const valor = prompt(
+        'Quanto você já guardou para ' + meta.name + '? (R$)',
+        meta.saved
+    );
+
+    if (valor === null) {
+        return;
+    }
+
+    // Aceita valores com vírgula ou ponto decimal.
+    const valorNumerico = Number(valor.replace(',', '.'));
+
+    if (
+        valor.trim() === '' ||
+        !Number.isFinite(valorNumerico) ||
+        valorNumerico < 0
+    ) {
+        toast('Informe um valor válido.');
+        return;
+    }
+
+    const dados = new FormData();
+
+    dados.append('id', id);
+    dados.append('saved', valorNumerico);
+
+    try {
+
+        const resposta = await fetch(
+            'api/metas/progresso.php',
+            {
+                method: 'POST',
+                body: dados
+            }
+        );
+
+        const texto = await resposta.text();
+
+        let resultado;
+
+        try {
+            resultado = JSON.parse(texto);
+        } catch (erro) {
+            console.error('Resposta do PHP:', texto);
+            throw new Error('Resposta inválida do PHP.');
+        }
+
+        if (!resposta.ok || !resultado.sucesso) {
+            throw new Error(
+                resultado.erro || 'Erro ao atualizar meta.'
+            );
+        }
+
+        // Busca novamente os registros.
+        await loadGoalsFromDatabase();
+
+        toast(resultado.mensagem);
+
+    } catch (erro) {
+
+        console.error('Erro ao atualizar meta:', erro);
+
+        toast(erro.message);
     }
 }
 
-// Confirma e remove uma meta.
-function deleteGoal(id) {
-    if (confirm('Excluir esta meta?')) {
-        goals = goals.filter(g => g.id !== id);
-        save();
+// ==========================================
+// CANCELAR META
+// ==========================================
+
+async function deleteGoal(id) {
+
+    const meta = goals.find(
+        g => String(g.id) === String(id)
+    );
+
+    if (!meta) {
+        toast('Meta não encontrada.');
+        return;
+    }
+
+    if (!confirm('Deseja cancelar a meta "' + meta.name + '"?')) {
+        return;
+    }
+
+    const dados = new FormData();
+
+    dados.append('id', id);
+
+    try {
+
+        const resposta = await fetch(
+            'api/metas/excluir.php',
+            {
+                method: 'POST',
+                body: dados
+            }
+        );
+
+        const texto = await resposta.text();
+
+        let resultado;
+
+        try {
+            resultado = JSON.parse(texto);
+        } catch (erro) {
+            console.error('Resposta do PHP:', texto);
+            throw new Error('Resposta inválida do PHP.');
+        }
+
+        if (!resposta.ok || !resultado.sucesso) {
+            throw new Error(
+                resultado.erro || 'Erro ao cancelar meta.'
+            );
+        }
+
+        await loadGoalsFromDatabase();
+
+        toast(resultado.mensagem);
+
+    } catch (erro) {
+
+        console.error('Erro ao cancelar meta:', erro);
+
+        toast(erro.message);
+    }
+}
+
+// ==========================================
+// CARREGAR METAS DO MYSQL
+// ==========================================
+
+async function loadGoalsFromDatabase() {
+
+    try {
+
+        const resposta = await fetch(
+            'api/metas/listar.php'
+        );
+
+        const texto = await resposta.text();
+
+        let resultado;
+
+        // Converte a resposta do PHP.
+        try {
+
+            resultado = JSON.parse(texto);
+
+        } catch (erro) {
+
+            console.error('Resposta do PHP:', texto);
+
+            throw new Error(
+                'O PHP retornou uma resposta inválida.'
+            );
+        }
+
+        if (!resposta.ok || !resultado.sucesso) {
+            throw new Error(
+                resultado.erro || 'Erro ao carregar metas.'
+            );
+        }
+
+        // Atualiza o array.
+        goals = resultado.metas.map(g => ({
+            ...g,
+            target: Number(g.target),
+            saved: Number(g.saved)
+        }));
+
+        // Atualiza a tela.
         render();
+
+    } catch (erro) {
+
+        console.error('Erro ao carregar metas:', erro);
+
+        toast(erro.message);
     }
 }
 
@@ -1136,3 +1357,4 @@ updateMini();
 render();
 loadCategoriesFromDatabase();
 loadExpensesFromDatabase();
+loadGoalsFromDatabase();
