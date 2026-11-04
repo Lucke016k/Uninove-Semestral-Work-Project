@@ -1,41 +1,184 @@
+<?php
+session_start();
+
+// Recupera mensagens enviadas pelo backend.
+$mensagemErro = $_SESSION["auth_error"] ?? "";
+
+unset($_SESSION["auth_error"]);
+?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Cadastro - MeuSaldo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Criar conta - MeuSaldo</title>
+
+    <!-- CSS principal do projeto -->
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
 
-    <h1>Criar conta - MeuSaldo</h1>
+<body class="auth-page">
 
-    <form action="processa_cadastro.php" method="POST">
+    <div class="auth-container">
 
-        <label for="nome">Nome:</label>
-        <input type="text" id="nome" name="nome" required>
+        <!-- Identidade visual -->
+        <header class="auth-brand">
+            <div class="auth-brand-icon">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="30"
+         height="30"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="1.8"
+         stroke-linecap="round"
+         stroke-linejoin="round">
 
-        <br><br>
+        <rect x="3" y="5" width="18" height="15" rx="3"/>
+        <path d="M3 9h18"/>
+        <path d="M16 14h2"/>
+        <path d="M7 5V4a2 2 0 0 1 2-2h8"/>
+    </svg>
+</div>
 
-        <label for="email">E-mail:</label>
-        <input type="email" id="email" name="email" required>
+            <h1>MeuSaldo</h1>
+            <p>Seus gastos, seus objetivos.</p>
+        </header>
 
-        <br><br>
+        <!-- Cartão de cadastro -->
+        <main class="auth-card">
 
-        <label for="senha">Senha:</label>
-        <input type="password" id="senha" name="senha" required>
+            <h2>Crie sua conta</h2>
 
-        <br><br>
+            <p class="auth-description">
+                Comece a organizar seu dinheiro e acompanhar seus objetivos.
+            </p>
 
-        <label for="confirmar_senha">Confirmar senha:</label>
-        <input type="password" id="confirmar_senha"
-               name="confirmar_senha" required>
+            <!-- Mensagem de erro -->
+            <?php if (!empty($mensagemErro)): ?>
+                <div class="auth-message error">
+                    <?= htmlspecialchars($mensagemErro, ENT_QUOTES, "UTF-8") ?>
+                </div>
+            <?php endif; ?>
 
-        <br><br>
+            <form
+                action="processa_cadastro.php"
+                method="POST"
+                class="auth-form"
+            >
 
-        <button type="submit">Criar conta</button>
+                <!-- Nome -->
+                <div class="auth-field">
+                    <label for="nome">Nome completo</label>
 
-    </form>
+                    <input
+                        type="text"
+                        id="nome"
+                        name="nome"
+                        placeholder="Digite seu nome"
+                        maxlength="120"
+                        autocomplete="name"
+                        required
+                    >
+                </div>
 
-    <a href="login.php">Já tenho uma conta</a>
+                <!-- E-mail -->
+                <div class="auth-field">
+                    <label for="email">E-mail</label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="Digite seu melhor e-mail"
+                        maxlength="254"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <!-- Senha -->
+                <div class="auth-field">
+                    <label for="senha">Senha</label>
+
+                    <div class="auth-password">
+                        <input
+                            type="password"
+                            id="senha"
+                            name="senha"
+                            placeholder="Crie uma senha"
+                            minlength="6"
+                            autocomplete="new-password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="auth-show-password"
+                            onclick="mostrarSenha('senha', this)"
+                        >
+                            Mostrar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Confirmar senha -->
+                <div class="auth-field">
+                    <label for="confirmar_senha">Confirmar senha</label>
+
+                    <div class="auth-password">
+                        <input
+                            type="password"
+                            id="confirmar_senha"
+                            name="confirmar_senha"
+                            placeholder="Digite a senha novamente"
+                            minlength="6"
+                            autocomplete="new-password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="auth-show-password"
+                            onclick="mostrarSenha('confirmar_senha', this)"
+                        >
+                            Mostrar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Botão de cadastro -->
+                <button type="submit" class="auth-button">
+                    Criar minha conta
+                </button>
+
+            </form>
+
+            <!-- Voltar para login -->
+            <p class="auth-footer">
+                Já possui uma conta?
+                <a href="login.php">Fazer login</a>
+            </p>
+
+        </main>
+
+    </div>
+
+    <script>
+        function mostrarSenha(id, botao) {
+            const campo = document.getElementById(id);
+
+            if (campo.type === "password") {
+                campo.type = "text";
+                botao.textContent = "Ocultar";
+            } else {
+                campo.type = "password";
+                botao.textContent = "Mostrar";
+            }
+        }
+    </script>
 
 </body>
 </html>
