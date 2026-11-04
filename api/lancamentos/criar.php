@@ -25,6 +25,14 @@ function responder($status, $dados)
 // 3. Identificação do usuário
 $idUsuario = $_SESSION['ID_USUARIO'] ?? null;
 
+// Verifica a autenticação.
+if (!$idUsuario) {
+    responder(401, [
+        'sucesso' => false,
+        'erro' => 'Usuário não autenticado.'
+    ]);
+}
+
 
 // 4. Recebimento dos dados
 $descricao = trim($_POST['description'] ?? '');
