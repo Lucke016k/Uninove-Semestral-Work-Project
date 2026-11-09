@@ -23,7 +23,7 @@ function responder($status, $dados)
 
 
 // 3. Identificação do usuário
-$idUsuario = $_SESSION['ID_USUARIO'] ?? null;
+$idUsuario = $_SESSION['usuario']['id'] ?? null;
 
 // Verifica a autenticação.
 if (!$idUsuario) {

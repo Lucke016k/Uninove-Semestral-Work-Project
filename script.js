@@ -148,6 +148,26 @@ async function callApi(url, dados = null) {
     return resultado;
 }
 
+// Carrega os dados do usuário autenticado pela sessão PHP.
+async function loadUserFromSession() {
+    try {
+       const resultado = await callApi('PaginaLogin/meu_perfil.php');
+
+        user = {
+            name: resultado.usuario.nome,
+            email: resultado.usuario.email
+        };
+
+        $('userLabel').textContent = user.name || 'Usuário';
+
+        render();
+
+    } catch (erro) {
+        console.error('Erro ao carregar perfil:', erro);
+        toast('Não foi possível carregar os dados do usuário.');
+    }
+}
+
 // Carrega os lançamentos do MySQL e atualiza a interface.
 async function loadExpensesFromDatabase() {
     try {
@@ -795,7 +815,7 @@ function settingsPage() {
             <div class="card">
                 <h3 class="section-title">Sessão</h3>
                 <p class="muted" style="font-size:12px">Você está usando o protótipo local do Controle Financeiro.</p>
-                <button class="btn danger" onclick="$('loginPage').classList.add('show')">Sair da conta</button>
+                <button class="btn danger" onclick="window.location.href='PaginaLogin/logout.php'">Sair da conta</button>
             </div>
         </div>
     </div>`;
@@ -1330,19 +1350,8 @@ function clearData() {
     }
 }
 
-// LOGIN FICTÍCIO: aceita qualquer e-mail/senha e apenas simula a entrada.
-// Deve ser substituído por autenticação PHP (a sessão já é lida pelas APIs).
-$('loginForm').onsubmit = e => {
-    e.preventDefault();
 
-    user.email = e.target.elements.email.value;
-    user.name = user.email.split('@')[0] || 'Usuário';
-    save();
 
-    $('userLabel').textContent = user.name;
-    $('loginPage').classList.remove('show');
-    toast('Bem-vindo!');
-};
 
 $('userPill').onclick = () => setPage('settings');
 window.addEventListener('resize', () => {
@@ -1355,6 +1364,8 @@ window.addEventListener('resize', () => {
 
 updateMini();
 render();
+
+loadUserFromSession();
 loadCategoriesFromDatabase();
 loadExpensesFromDatabase();
 loadGoalsFromDatabase();

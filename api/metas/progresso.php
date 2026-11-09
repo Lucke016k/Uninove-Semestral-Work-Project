@@ -13,7 +13,7 @@ function responder($status, $dados)
     exit;
 }
 
-$idUsuario = $_SESSION['ID_USUARIO'] ?? null;
+$idUsuario = $_SESSION['usuario']['id'] ?? null;
 
 if (!$idUsuario) {
     responder(401, [

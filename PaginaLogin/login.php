@@ -22,7 +22,7 @@ if (isset($_GET["cadastro"]) && $_GET["cadastro"] === "sucesso") {
     <title>Entrar - MeuSaldo</title>
 
     <!-- CSS principal do projeto -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="login.css">
 </head>
 
 <body class="auth-page">
@@ -146,13 +146,15 @@ if (isset($_GET["cadastro"]) && $_GET["cadastro"] === "sucesso") {
             </div>
 
             <!-- Login Google -->
-            <button
-                type="button"
-                class="auth-google"
-                onclick="loginGoogle()"
-            >
-                Continuar com Google
-            </button>
+            <a href="google_login.php" class="auth-google">
+    <img
+        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+        alt="Google"
+        width="20"
+        height="20"
+    >
+    Continuar com Google
+</a>
 
             <!-- Link para cadastro -->
             <p class="auth-footer">
@@ -165,24 +167,18 @@ if (isset($_GET["cadastro"]) && $_GET["cadastro"] === "sucesso") {
     </div>
 
     <script>
-        function mostrarSenha(id, botao) {
-            const campo = document.getElementById(id);
+    function mostrarSenha(id, botao) {
+        const campo = document.getElementById(id);
 
-            if (campo.type === "password") {
-                campo.type = "text";
-                botao.textContent = "Ocultar";
-            } else {
-                campo.type = "password";
-                botao.textContent = "Mostrar";
-            }
+        if (campo.type === "password") {
+            campo.type = "text";
+            botao.textContent = "Ocultar";
+        } else {
+            campo.type = "password";
+            botao.textContent = "Mostrar";
         }
-
-        function loginGoogle() {
-            alert(
-                "A integração com o Google será disponibilizada posteriormente."
-            );
-        }
-    </script>
+    }
+</script>
 
 </body>
 </html>

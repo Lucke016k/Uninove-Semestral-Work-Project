@@ -14,7 +14,7 @@ function responder($status, $dados)
 }
 
 // Identifica o usuário.
-$idUsuario = $_SESSION['ID_USUARIO'] ?? null;
+$idUsuario = $_SESSION['usuario']['id'] ?? null;
 
 if (!$idUsuario) {
     responder(401, [

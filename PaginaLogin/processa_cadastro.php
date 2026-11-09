@@ -6,7 +6,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 // Conexão com o banco
-require_once __DIR__ . "/conexao.php";
+require_once __DIR__ . "/../config/conexao.php";
 
 // Recebendo os dados
 $nome = trim($_POST["nome"] ?? "");

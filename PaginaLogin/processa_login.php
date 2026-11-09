@@ -8,37 +8,27 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
-// Conexão com o banco
-require_once __DIR__ . "/conexao.php";
-
-// Função para exibir mensagens de erro
-function erroLogin($mensagem) {
-    echo "
-    <!DOCTYPE html>
-    <html lang='pt-br'>
-    <head>
-        <meta charset='UTF-8'>
-        <title>Erro no login</title>
-    </head>
-    <body>
-        <h2>" . htmlspecialchars($mensagem) . "</h2>
-        <a href='login.php'>Voltar para o login</a>
-    </body>
-    </html>";
-    exit;
-}
+// Conexão central do projeto
+require_once __DIR__ . "/../config/conexao.php";
 
 // Recebendo os dados
 $email = trim($_POST["email"] ?? "");
 $senha = $_POST["senha"] ?? "";
 
-// Validação
+error_log("Tamanho da senha recebida: " . strlen($senha));
+
+// Validação dos campos
 if ($email === "" || $senha === "") {
-    erroLogin("Preencha todos os campos.");
+    $_SESSION["auth_error"] = "Preencha todos os campos.";
+    header("Location: login.php");
+    exit;
 }
 
+// Validação do e-mail
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    erroLogin("Digite um e-mail válido.");
+    $_SESSION["auth_error"] = "Digite um e-mail válido.";
+    header("Location: login.php");
+    exit;
 }
 
 try {
@@ -58,31 +48,41 @@ try {
 
     $usuario = $stmt->fetch();
 
-    // Verificando se o usuário existe e se a senha está correta
-    if (!$usuario || !password_verify($senha, $usuario["SENHA_HASH"])) {
-        erroLogin("E-mail ou senha incorretos.");
-    }
+    // Verificando usuário e senha
+    // Verificando se o usuário foi encontrado
+if (!$usuario) {
+    die("USUÁRIO NÃO ENCONTRADO NA CONSULTA.");
+}
 
-    // Criando uma nova identificação de sessão
+// Verificando se a senha confere
+// Verificando se o usuário foi encontrado
+if (!$usuario) {
+    die("USUÁRIO NÃO ENCONTRADO NA CONSULTA.");
+}
+
+// Verificando se a senha confere
+if (!password_verify($senha, $usuario["SENHA_HASH"])) {
+    die("USUÁRIO ENCONTRADO, MAS A SENHA NÃO CONFERE.");
+}
+    // Proteção da sessão
     session_regenerate_id(true);
 
-    // Armazenando os dados do usuário na sessão
+    // Armazenando dados na sessão
     $_SESSION["usuario"] = [
         "id" => $usuario["ID_USUARIO"],
         "nome" => $usuario["NOME"],
         "email" => $usuario["EMAIL"]
     ];
 
-    // Redirecionando para a página inicial
-    header("Location: inicio.php");
+    // Redirecionando para o dashboard
+    header("Location: ../index.php");
     exit;
 
 } catch (PDOException $erro) {
 
     error_log($erro->getMessage());
 
-    erroLogin("Não foi possível realizar o login. Tente novamente.");
-
+    $_SESSION["auth_error"] = "Erro no servidor. Tente novamente.";
+    header("Location: login.php");
+    exit;
 }
-
-?>
