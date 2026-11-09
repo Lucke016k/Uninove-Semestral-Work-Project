@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 
@@ -16,10 +17,14 @@ unset($_SESSION["auth_error"]);
     <title>Criar conta - MeuSaldo</title>
 
     <!-- CSS principal do projeto -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="login.css">
 </head>
 
+
+
 <body class="auth-page">
+
+
 
     <div class="auth-container">
 
