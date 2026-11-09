@@ -23,7 +23,7 @@ function responder($status, $dados)
 }
 
 // Recupera o usuário autenticado.
-$idUsuario = $_SESSION['ID_USUARIO'] ?? null;
+$idUsuario = $_SESSION['usuario']['id'] ?? null;
 
 // Verifica a autenticação.
 if (!$idUsuario){

@@ -6,6 +6,15 @@
  * ficará em config/conexao.php e será usada por endpoints PHP separados.
  */
 ?>
+<?php
+session_start();
+
+if (!isset($_SESSION["usuario"])) {
+    header("Location: PaginaLogin/login.php");
+    exit;
+}
+$usuarioLogado = $_SESSION["usuario"];
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -105,9 +114,11 @@
                     <span id="today"></span>
                 </button>
                 <button class="pill" id="userPill">
-                    <span class="avatar">♙</span>
-                    <span id="userLabel">Usuário</span>
-                </button>
+    <span class="avatar">♙</span>
+    <span id="userLabel">
+        <?= htmlspecialchars($_SESSION["usuario"]["nome"] ?? "Usuário", ENT_QUOTES, "UTF-8") ?>
+    </span>
+</button>
             </div>
             <!-- Área dinâmica: Início, Lançamentos, Relatórios, Categorias, Metas ou Configurações. -->
             <section id="page"></section>
