@@ -1,4 +1,3 @@
-
 :root{
     --bg:#f5f2e7;
     --panel:#fffdf7;
@@ -695,5 +694,585 @@
     }
     .goal-amount{
         font-size:10px
+    }
+}
+
+
+/* ==========================================
+   METAS: ícones de ação e popup de edição
+   ========================================== */
+.goal-line .actions{
+    display:flex;
+    gap:4px;
+    align-items:center;
+    justify-content:flex-end
+}
+.actions .btn-icon{
+    width:32px;
+    height:32px;
+    padding:0;
+    display:inline-grid;
+    vertical-align:middle;
+    place-items:center;
+    border:1px solid transparent;
+    border-radius:8px;
+    background:none;
+    color:#748174;
+    cursor:pointer;
+    transition:background .15s,color .15s,border-color .15s
+}
+.actions .btn-icon:hover{
+    background:var(--mint);
+    color:var(--green)
+}
+.actions .btn-icon.delete:hover{
+    background:#f6e3de;
+    border-color:#ecc9c0;
+    color:var(--red)
+}
+.actions .btn-icon:focus-visible{
+    outline:2px solid var(--green);
+    outline-offset:2px
+}
+
+/* Animação de abertura dos popups */
+.modal-back.show{
+    animation:modalFade .18s ease
+}
+.modal-back.show .modal{
+    animation:modalPop .22s cubic-bezier(.2,.9,.3,1.2)
+}
+@keyframes modalFade{from{opacity:0}to{opacity:1}}
+@keyframes modalPop{
+    from{opacity:0;transform:translateY(14px) scale(.96)}
+    to{opacity:1;transform:none}
+}
+
+/* Popup de edição de meta */
+.modal-back{
+    backdrop-filter:blur(2px)
+}
+.modal-edit .modal-head{
+    padding-bottom:16px;
+    border-bottom:1px solid var(--line)
+}
+.modal-title{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-width:0
+}
+.modal-title small{
+    display:block;
+    margin-top:3px;
+    color:var(--muted);
+    font-size:11px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:260px
+}
+.modal-icon{
+    width:42px;
+    height:42px;
+    flex:none;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:#e5eadd;
+    font-size:18px
+}
+.modal-edit .close{
+    width:32px;
+    height:32px;
+    border-radius:8px;
+    line-height:1;
+    cursor:pointer
+}
+.modal-edit .close:hover{
+    background:var(--mint);
+    color:var(--green)
+}
+.goal-edit-progress{
+    margin-bottom:18px
+}
+.goal-edit-progress small{
+    display:block;
+    margin-top:7px;
+    color:var(--muted);
+    font-size:11px;
+    text-align:right
+}
+.modal-edit .form-group input:disabled{
+    background:#f1eee3;
+    color:var(--muted);
+    cursor:not-allowed
+}
+.modal-edit .form-group input:focus{
+    outline:none;
+    border-color:var(--green);
+    box-shadow:0 0 0 3px #244f3b1f
+}
+.modal-edit .modal-actions{
+    padding-top:18px;
+    border-top:1px solid var(--line)
+}
+.modal-edit .btn{
+    cursor:pointer
+}
+
+/* Mantém editar/excluir visíveis no celular */
+@media(max-width:680px){
+    .goal-line{
+        grid-template-columns:34px 1fr 75px
+    }
+    .goal-line .actions{
+        display:flex;
+        grid-column:2/-1;
+        justify-content:flex-start
+    }
+}
+
+
+/* ==========================================
+   POPUP DE CONFIRMAÇÃO DE EXCLUSÃO
+   ========================================== */
+.confirm-back{
+    z-index:20
+}
+.modal.modal-confirm{
+    width:min(380px,100%);
+    text-align:center;
+    padding:28px 24px 22px
+}
+.confirm-icon{
+    width:56px;
+    height:56px;
+    margin:0 auto 14px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:#f6e3de;
+    color:var(--red)
+}
+.confirm-back.info .confirm-icon{
+    background:var(--mint);
+    color:var(--green)
+}
+.confirm-back.info .confirm-icon svg{
+    display:none
+}
+.confirm-back.info .confirm-icon::before{
+    content:"!";
+    font-size:26px;
+    font-weight:700
+}
+.modal-confirm h2{
+    margin:0 0 8px;
+    color:var(--green);
+    font-size:17px
+}
+.modal-confirm p{
+    margin:0;
+    color:var(--muted);
+    font-size:12.5px;
+    line-height:1.55;
+    overflow-wrap:anywhere
+}
+.modal-confirm .modal-actions{
+    justify-content:center;
+    margin-top:22px
+}
+.modal-confirm .btn{
+    min-width:112px;
+    cursor:pointer
+}
+.btn.btn-danger-solid{
+    background:var(--red);
+    border-color:var(--red);
+    color:#fff
+}
+.confirm-back.info .btn-danger-solid{
+    background:var(--green);
+    border-color:var(--green)
+}
+.btn[hidden]{
+    display:none
+}
+
+/* Popup de categoria */
+.modal-icon[hidden]{
+    display:none
+}
+#categoryModal .form-group input:focus{
+    outline:none;
+    border-color:var(--green);
+    box-shadow:0 0 0 3px #244f3b1f
+}
+#categoryModal .btn,
+#categoryModal .close{
+    cursor:pointer
+}
+
+
+/* ==========================================
+   LUCROS FIXOS E VARIÁVEIS
+   ========================================== */
+.income-row{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:16px
+}
+.income-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    width:100%;
+    font:inherit;
+    text-align:left;
+    color:inherit;
+    cursor:pointer;
+    transition:transform .15s,box-shadow .15s,border-color .15s
+}
+.income-card:hover{
+    transform:translateY(-2px);
+    border-color:#c9d3bf;
+    box-shadow:0 12px 28px #304b3520
+}
+.income-card:focus-visible{
+    outline:2px solid var(--green);
+    outline-offset:2px
+}
+.income-ico{
+    width:46px;
+    height:46px;
+    flex:none;
+    border-radius:12px;
+    display:grid;
+    place-items:center;
+    background:var(--green);
+    color:#fff
+}
+.income-info{
+    display:grid;
+    gap:3px;
+    min-width:0;
+    flex:1
+}
+.income-label{
+    font-size:12px;
+    color:var(--muted)
+}
+.income-value{
+    font-size:22px;
+    font-weight:750;
+    color:var(--green);
+    letter-spacing:-.6px
+}
+.income-note{
+    font-size:10px;
+    color:var(--green2)
+}
+.income-edit{
+    color:var(--muted);
+    opacity:0;
+    transition:opacity .15s
+}
+.income-card:hover .income-edit,
+.income-card:focus-visible .income-edit{
+    opacity:1
+}
+
+/* Popup de lucros */
+.modal.modal-income{
+    width:min(640px,100%);
+    max-height:calc(100vh - 36px);
+    overflow-y:auto;
+    padding:28px
+}
+.income-head{
+    align-items:flex-start;
+    margin-bottom:20px
+}
+.income-head h2{
+    font-size:26px;
+    letter-spacing:-.5px
+}
+.income-head .modal-title{
+    gap:18px
+}
+.income-head small{
+    max-width:none;
+    font-size:13px;
+    white-space:normal
+}
+.income-bag{
+    width:68px;
+    height:68px;
+    flex:none;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:#e5eadd;
+    color:var(--green)
+}
+.income-summary{
+    display:grid;
+    grid-template-columns:1.25fr 1fr 1fr;
+    background:var(--mint);
+    border-radius:14px;
+    padding:18px 4px 18px 22px;
+    margin-bottom:22px
+}
+.income-total,
+.income-part{
+    display:grid;
+    align-content:center;
+    gap:5px
+}
+.income-part{
+    padding-left:20px;
+    border-left:1px solid #c7d1bd
+}
+.income-total span{
+    font-size:14px;
+    font-weight:650;
+    color:var(--text)
+}
+.income-total strong{
+    font-size:28px;
+    color:var(--green);
+    letter-spacing:-.8px
+}
+.income-part-label{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:13px;
+    font-weight:650;
+    color:var(--green)
+}
+.income-part strong{
+    font-size:19px;
+    color:var(--green)
+}
+.income-part small{
+    color:var(--muted);
+    font-size:12px
+}
+.income-section{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    margin:0 0 4px;
+    font-size:16px;
+    color:var(--green)
+}
+.income-help{
+    margin:0 0 14px;
+    color:var(--muted);
+    font-size:12.5px
+}
+.opt-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px
+}
+.opt-card{
+    position:relative;
+    display:block;
+    cursor:pointer
+}
+.opt-card input,
+.seg input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none
+}
+.opt-box{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:#fffdf7;
+    transition:background .15s,border-color .15s
+}
+.opt-card:hover .opt-box{
+    border-color:#c9d3bf
+}
+.opt-card input:checked + .opt-box{
+    background:var(--mint);
+    border-color:var(--green);
+    box-shadow:0 0 0 1px var(--green)
+}
+.opt-card input:focus-visible + .opt-box,
+.seg input:focus-visible + span{
+    outline:2px solid var(--green);
+    outline-offset:2px
+}
+.opt-radio{
+    width:20px;
+    height:20px;
+    flex:none;
+    border:2px solid #b9c3b0;
+    border-radius:50%;
+    background:#fffdf7;
+    display:grid;
+    place-items:center
+}
+.opt-card input:checked + .opt-box .opt-radio{
+    border-color:var(--green)
+}
+.opt-card input:checked + .opt-box .opt-radio::after{
+    content:"";
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:var(--green)
+}
+.opt-ico{
+    color:var(--green);
+    display:grid;
+    place-items:center
+}
+.opt-text{
+    display:grid;
+    gap:3px;
+    min-width:0
+}
+.opt-text strong{
+    font-size:14px;
+    color:var(--text)
+}
+.opt-text small{
+    color:var(--muted);
+    font-size:12px
+}
+.income-label-ico{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:13px !important;
+    font-weight:650;
+    color:var(--text) !important
+}
+.money-input{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#fffdf7;
+    overflow:hidden
+}
+.money-input:focus-within{
+    border-color:var(--green);
+    box-shadow:0 0 0 3px #244f3b1f
+}
+.money-input span{
+    display:grid;
+    place-items:center;
+    padding:0 16px;
+    background:var(--mint);
+    color:var(--green);
+    font-weight:700;
+    font-size:13px
+}
+.money-input input{
+    border:0 !important;
+    border-radius:0 !important;
+    outline:none;
+    flex:1;
+    min-width:0;
+    padding:13px 12px !important;
+    background:transparent !important
+}
+.seg{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:4px;
+    padding:3px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#fffdf7
+}
+.seg label{
+    position:relative;
+    display:block;
+    cursor:pointer
+}
+.seg span{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:10px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-weight:650;
+    color:var(--green);
+    transition:background .15s,color .15s
+}
+.seg input:checked + span{
+    background:var(--green);
+    color:#fff
+}
+.income-hint{
+    margin:-6px 0 0;
+    color:var(--muted);
+    font-size:12px
+}
+.income-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-top:20px
+}
+.income-actions .btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:14px;
+    font-size:14px;
+    border-radius:10px;
+    cursor:pointer
+}
+.income-actions .btn:not(.primary){
+    border-color:var(--green)
+}
+
+@media(max-width:680px){
+    .income-row{
+        grid-template-columns:1fr
+    }
+    .income-edit{
+        opacity:1
+    }
+    .modal.modal-income{
+        padding:20px
+    }
+    .income-summary{
+        grid-template-columns:1fr 1fr;
+        padding:16px
+    }
+    .income-total{
+        grid-column:1/-1;
+        padding-bottom:14px;
+        margin-bottom:14px;
+        border-bottom:1px solid #c7d1bd
+    }
+    .income-part:nth-of-type(2){
+        border-left:0;
+        padding-left:0
+    }
+    .opt-grid{
+        grid-template-columns:1fr
+    }
+    .income-bag{
+        width:54px;
+        height:54px
     }
 }

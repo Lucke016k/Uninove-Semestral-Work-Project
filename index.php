@@ -231,6 +231,179 @@ $usuarioLogado = $_SESSION["usuario"];
             </form>
         </div>
     </div>
+    <!-- Modal para editar uma meta existente. -->
+    <div class="modal-back" id="goalEditModalBack">
+        <div class="modal modal-edit" role="dialog" aria-modal="true" aria-labelledby="goalEditTitle">
+            <div class="modal-head">
+                <div class="modal-title">
+                    <span class="modal-icon" id="goalEditIcon">◎</span>
+                    <div>
+                        <h2 id="goalEditTitle">Editar meta</h2>
+                        <small id="goalEditSubtitle">Atualize o valor guardado</small>
+                    </div>
+                </div>
+                <button type="button" class="close" id="closeGoalEdit" aria-label="Fechar">×</button>
+            </div>
+            <form id="goalEditForm">
+                <input type="hidden" name="id">
+                <div class="goal-edit-progress">
+                    <div class="progress"><span id="goalEditBar" style="width:0%"></span></div>
+                    <small id="goalEditPercent">0% concluído</small>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Nome da meta</label>
+                        <input name="name" required maxlength="480" placeholder="Ex.: Viagem dos sonhos">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor desejado (R$)</label>
+                        <input name="target" type="number" min="1" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Já guardado (R$)</label>
+                        <input name="saved" type="number" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Prazo</label>
+                        <input name="due" type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ícone</label>
+                        <select name="icon">
+                            <option>✈</option>
+                            <option>⌂</option>
+                            <option>🚗</option>
+                            <option>▤</option>
+                            <option>◎</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="cancelGoalEdit">Cancelar</button>
+                    <button class="btn primary" type="submit">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Modal de criação/edição de categoria. -->
+    <div class="modal-back" id="categoryModalBack">
+        <div class="modal" id="categoryModal" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
+            <div class="modal-head">
+                <div class="modal-title">
+                    <span class="modal-icon" id="categoryModalIcon" hidden>◆</span>
+                    <div>
+                        <h2 id="categoryModalTitle">Nova categoria</h2>
+                        <small id="categoryModalSubtitle">Organize seus gastos por categoria</small>
+                    </div>
+                </div>
+                <button type="button" class="close" id="closeCategory" aria-label="Fechar">×</button>
+            </div>
+            <form id="categoryForm">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Nome da categoria</label>
+                        <input name="name" required maxlength="80" placeholder="Ex.: Educação">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="cancelCategory">Cancelar</button>
+                    <button class="btn primary" type="submit" id="categorySubmit">Criar categoria</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Popup de confirmação (usado para excluir metas, lançamentos e categorias). -->
+    <div class="modal-back confirm-back" id="confirmModalBack">
+        <div class="modal modal-confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmText">
+            <div class="confirm-icon" id="confirmIcon"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></div>
+            <h2 id="confirmTitle">Excluir item?</h2>
+            <p id="confirmText"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn" id="confirmCancel">Cancelar</button>
+                <button type="button" class="btn btn-danger-solid" id="confirmOk">Excluir</button>
+            </div>
+        </div>
+    </div>
+    <!-- Popup de lucros: visualizar e lançar lucro fixo ou variável. -->
+    <div class="modal-back" id="incomeModalBack">
+        <div class="modal modal-income" role="dialog" aria-modal="true" aria-labelledby="incomeTitle">
+            <div class="modal-head income-head">
+                <div class="modal-title">
+                    <span class="income-bag"><svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path d="M9 2.5h6l-1.6 3.2h-2.8L9 2.5z" fill="currentColor"/><path d="M12 6.5c-4.2 0-7.2 3.7-7.2 8.2 0 3.4 2.3 6.3 7.2 6.3s7.2-2.9 7.2-6.3c0-4.5-3-8.2-7.2-8.2z" fill="currentColor"/><text x="12" y="18" text-anchor="middle" font-size="10" font-weight="700" fill="#e5eadd" font-family="Arial,sans-serif">$</text></svg></span>
+                    <div>
+                        <h2 id="incomeTitle">Lucro</h2>
+                        <small>Gerencie seu lucro fixo ou variável.</small>
+                    </div>
+                </div>
+                <button type="button" class="close" id="closeIncome" aria-label="Fechar">×</button>
+            </div>
+            <div class="income-summary">
+                <div class="income-total">
+                    <span>Lucro Total Atual</span>
+                    <strong id="incomeTotal">R$ 0,00</strong>
+                </div>
+                <div class="income-part">
+                    <span class="income-part-label"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V11"/><path d="M12 21V4"/><path d="M19 21v-7"/></svg>Fixo</span>
+                    <strong id="incomeFixed">R$ 0,00</strong>
+                    <small id="incomeFixedPct">(0%)</small>
+                </div>
+                <div class="income-part">
+                    <span class="income-part-label"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Variável</span>
+                    <strong id="incomeVariable">R$ 0,00</strong>
+                    <small id="incomeVariablePct">(0%)</small>
+                </div>
+            </div>
+            <form id="incomeForm">
+                <h3 class="income-section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M12 7v10M7 12h10" stroke="#fffdf7" stroke-width="2.2" stroke-linecap="round"/></svg>Lançar Novo Valor</h3>
+                <p class="income-help">Adicione um valor ao seu lucro atual ou substitua pelo novo valor.</p>
+                <div class="opt-grid">
+                    <label class="opt-card">
+                        <input type="radio" name="modo" value="adicionar" checked>
+                        <span class="opt-box">
+                            <span class="opt-radio"></span>
+                            <span class="opt-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M3 11h18"/><path d="M12 14v4"/><path d="M10 16h4"/></svg></span>
+                            <span class="opt-text"><strong>Adicionar</strong><small>Soma ao valor atual</small></span>
+                        </span>
+                    </label>
+                    <label class="opt-card">
+                        <input type="radio" name="modo" value="substituir">
+                        <span class="opt-box">
+                            <span class="opt-radio"></span>
+                            <span class="opt-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 0-15.5-6.2L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 15.5 6.2L21 16"/><path d="M21 21v-5h-5"/></svg></span>
+                            <span class="opt-text"><strong>Substituir</strong><small>Troca o valor atual</small></span>
+                        </span>
+                    </label>
+                </div>
+                <div class="opt-grid income-fields">
+                    <div class="form-group">
+                        <label class="income-label-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>Valor *</label>
+                        <div class="money-input">
+                            <span>R$</span>
+                            <input name="valor" id="incomeValue" inputmode="decimal" autocomplete="off" placeholder="Ex: 1.000,00" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="income-label-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>Tipo *</label>
+                        <div class="seg">
+                            <label>
+                                <input type="radio" name="tipo" value="FIXA" checked>
+                                <span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Fixo</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="tipo" value="VARIAVEL">
+                                <span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Variável</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <p class="income-hint" id="incomeHint"></p>
+                <div class="modal-actions income-actions">
+                    <button type="button" class="btn" id="cancelIncome">Cancelar</button>
+                    <button class="btn primary" type="submit"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- Tela visual de login. O login atual é apenas demonstrativo e será substituído por autenticação PHP. -->
     <div class="login-page" id="loginPage">
         <div class="login-box">

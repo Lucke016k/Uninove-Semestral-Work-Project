@@ -32,6 +32,7 @@ const defaultGoals = [
 let expenses = [];   // Vem de api/lancamentos/listar.php
 let categories = []; // Vem de api/categorias/listar.php: { id, name, global }
 let goals = [];
+let income = { fixo: 0, variavel: 0 }; // Vem de api/receitas/resumo.php (mês atual)
 let user = load('cf_user', { name: 'Usuário', email: '' });
 let page = 'home';
 let editingId = null;
@@ -108,6 +109,53 @@ function toast(texto) {
 }
 
 // ==========================================
+// POPUP DE CONFIRMAÇÃO
+// ==========================================
+
+let editingCategoryId = null; // ID da categoria aberta no popup (null = nova)
+
+/*
+ * Mostra o popup de confirmação e devolve uma Promise<boolean>.
+ * Com info:true mostra apenas o botão de OK (aviso), sempre devolvendo true.
+ */
+function confirmDialog({ title = 'Excluir item?', message = '', confirmLabel = 'Excluir', cancelLabel = 'Cancelar', info = false } = {}) {
+    return new Promise(resolve => {
+        const back = $('confirmModalBack');
+        const ok = $('confirmOk');
+        const cancel = $('confirmCancel');
+
+        $('confirmTitle').textContent = title;
+        $('confirmText').textContent = message;
+        ok.textContent = confirmLabel;
+        cancel.textContent = cancelLabel;
+        cancel.hidden = info;
+        back.classList.toggle('info', info);
+
+        const finalizar = (resposta) => {
+            back.classList.remove('show');
+            document.removeEventListener('keydown', aoTeclar);
+            back.removeEventListener('click', aoClicarFora);
+            resolve(resposta);
+        };
+
+        const aoTeclar = (e) => {
+            if (e.key === 'Escape') finalizar(info);
+        };
+        const aoClicarFora = (e) => {
+            if (e.target === back) finalizar(info);
+        };
+
+        ok.onclick = () => finalizar(true);
+        cancel.onclick = () => finalizar(false);
+        document.addEventListener('keydown', aoTeclar);
+        back.addEventListener('click', aoClicarFora);
+
+        back.classList.add('show');
+        (info ? ok : cancel).focus();
+    });
+}
+
+// ==========================================
 // API (PHP)
 // ==========================================
 
@@ -137,8 +185,12 @@ async function callApi(url, dados = null) {
     try {
         resultado = JSON.parse(texto);
     } catch (erro) {
-        console.error('Resposta do PHP:', texto);
-        throw new Error('O PHP retornou uma resposta inválida.');
+        console.error('Resposta do PHP (' + url + ', HTTP ' + resposta.status + '):', texto);
+        throw new Error(
+            resposta.status === 404
+                ? 'Arquivo não encontrado no servidor: ' + url
+                : 'O PHP retornou uma resposta inválida (' + url + ', HTTP ' + resposta.status + ').'
+        );
     }
 
     if (!resposta.ok || !resultado.sucesso) {
@@ -182,6 +234,29 @@ async function loadExpensesFromDatabase() {
     }
 }
 
+// Carrega o total de lucros fixos e variáveis do mês atual.
+async function loadIncomeFromDatabase() {
+    try {
+        const resultado = await callApi('api/receitas/resumo.php?mes=' + todayISO().slice(0, 7));
+
+        income = {
+            fixo: Number(resultado.fixo) || 0,
+            variavel: Number(resultado.variavel) || 0
+        };
+        render();
+    } catch (erro) {
+        console.error('Erro ao carregar lucros:', erro);
+        toast(erro.message);
+    }
+}
+
+// Renda mensal usada no saldo estimado: lucros lançados ou, sem lançamentos, o valor de demonstração.
+function monthlyIncome() {
+    const totalLucros = income.fixo + income.variavel;
+
+    return totalLucros > 0 ? totalLucros : MONTHLY_INCOME;
+}
+
 // Carrega as categorias do MySQL. Sem categorias cadastradas, a lista fica vazia.
 async function loadCategoriesFromDatabase() {
     try {
@@ -218,6 +293,10 @@ function stat(label, value, note, ico) {
     </div>`;
 }
 
+// Ícones SVG usados nos botões de ação.
+const ICON_EDIT = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const ICON_TRASH = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+
 // Ícone visual de cada categoria (apenas decorativo).
 function iconFor(c) {
     return ({
@@ -253,8 +332,8 @@ function expenseRows(arr) {
             <td><span class="tag">${esc(e.payment)}</span></td>
             <td>${esc(e.category)}</td>
             <td class="actions">
-                <button title="Editar" onclick="editExpense(${e.id})">✎</button>
-                <button title="Excluir" onclick="deleteExpense(${e.id})">⌫</button>
+                <button class="btn-icon edit" title="Editar lançamento" aria-label="Editar lançamento" onclick="editExpense(${e.id})">${ICON_EDIT}</button>
+                <button class="btn-icon delete" title="Excluir lançamento" aria-label="Excluir lançamento" onclick="deleteExpense(${e.id})">${ICON_TRASH}</button>
             </td>
         </tr>`).join('');
 }
@@ -421,10 +500,11 @@ function homePage() {
         'Visão geral',
         'Acompanhe suas finanças e mantenha seus objetivos em dia.',
         `<button class="btn primary" onclick="openExpense()">＋ Novo lançamento</button>`)}
+    ${incomeCards()}
     <div class="grid stats">
         ${stat('Gastos registrados', money(sum), '↗ Atualizado com seus lançamentos', '▥')}
         ${stat('Gastos do mês', money(monthSum), 'Este mês', '▤')}
-        ${stat('Saldo estimado', money(MONTHLY_INCOME - sum), 'Considerando renda mensal de ' + money(MONTHLY_INCOME), '◉')}
+        ${stat('Saldo estimado', money(monthlyIncome() - sum), 'Considerando renda mensal de ' + money(monthlyIncome()), '◉')}
         ${stat('Lançamentos', expenses.length, 'Registros cadastrados', '☷')}
     </div>
     <div class="grid two-col">
@@ -455,6 +535,29 @@ function homePage() {
     </div>`;
 }
 
+// Cards de lucro fixo e variável. Clicar em um deles abre o popup de edição.
+function incomeCards() {
+    const iconFixo = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>';
+    const iconVar = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V11"/><path d="M12 21V4"/><path d="M19 21v-7"/></svg>';
+
+    const card = (tipo, label, valor, ico) => `
+        <button type="button" class="card income-card" onclick="openIncome('${tipo}')" title="Clique para editar" aria-label="Editar ${label}">
+            <span class="income-ico">${ico}</span>
+            <span class="income-info">
+                <span class="income-label">${label}</span>
+                <strong class="income-value">${money(valor)}</strong>
+                <small class="income-note">Este mês · clique para editar</small>
+            </span>
+            <span class="income-edit">${ICON_EDIT}</span>
+        </button>`;
+
+    return `
+    <div class="income-row">
+        ${card('FIXA', 'Lucros Fixos', income.fixo, iconFixo)}
+        ${card('VARIAVEL', 'Lucros Variáveis', income.variavel, iconVar)}
+    </div>`;
+}
+
 // Tela de lançamentos, indicadores e controles de filtro.
 function expensesPage() {
     const arr = filtered().slice().sort((a, b) => b.date.localeCompare(a.date));
@@ -466,6 +569,7 @@ function expensesPage() {
         'Lançamentos',
         'Organize e acompanhe todas as suas despesas.',
         `<button class="btn primary" onclick="openExpense()">＋ Novo lançamento</button>`)}
+    ${incomeCards()}
     <div class="grid stats">
         ${stat('Total filtrado', money(total(arr)), 'Soma dos lançamentos exibidos', '▥')}
         ${stat('Quantidade', arr.length, 'Lançamentos encontrados', '☷')}
@@ -656,8 +760,8 @@ function categoriesPage() {
                 <td><span class="tag">Ativa</span></td>
                 <td class="actions">${c.global
                     ? '<span class="muted" style="font-size:11px">Padrão do sistema</span>'
-                    : `<button onclick="renameCategory(${c.id})">✎ Renomear</button>
-                       <button onclick="removeCategory(${c.id})">⌫</button>`}
+                    : `<button class="btn-icon edit" onclick="renameCategory(${c.id})" title="Editar categoria" aria-label="Editar categoria">${ICON_EDIT}</button>
+                       <button class="btn-icon delete" onclick="removeCategory(${c.id})" title="Excluir categoria" aria-label="Excluir categoria">${ICON_TRASH}</button>`}
                 </td>
             </tr>`).join('')
         : `<tr><td colspan="5" class="empty">Nenhuma categoria cadastrada. Clique em "Nova categoria" para começar.</td></tr>`;
@@ -691,13 +795,8 @@ function categoriesPage() {
     </div>`;
 }
 
-// Metas e progresso. Os valores de renda fixa/variável ainda são exemplos.
+// Metas e progresso. Os cards de lucro vêm de api/receitas/resumo.php.
 function goalsPage() {
-    const fixed = goals
-        .filter(g => g.name.toLowerCase().includes('salário') || g.name.toLowerCase().includes('fixo'))
-        .reduce((soma, g) => soma + g.target, 0) || 2850;
-    const variable = 1250;
-
     const lista = goals.length
         ? goals.map(g => {
             const p = Math.min(100, g.saved / g.target * 100);
@@ -716,8 +815,8 @@ function goalsPage() {
                     <span class="tag">${Math.round(p)}% concluído</span>
                 </div>
                 <div class="actions">
-                    <button onclick="editGoal(${g.id})" title="Atualizar">✎</button>
-                    <button onclick="deleteGoal(${g.id})" title="Excluir">⌫</button>
+                    <button class="btn-icon edit" onclick="editGoal(${g.id})" title="Editar meta" aria-label="Editar meta"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+                    <button class="btn-icon delete" onclick="deleteGoal(${g.id})" title="Excluir meta" aria-label="Excluir meta"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
                 </div>
             </div>`;
         }).join('')
@@ -728,24 +827,7 @@ function goalsPage() {
         'Metas',
         'Defina seus objetivos e acompanhe seu progresso.',
         `<button class="btn primary" onclick="openGoal()">＋ Criar nova meta</button>`)}
-    <div class="grid goal-cards">
-        <div class="card goal-card">
-            <div class="bigicon">▣</div>
-            <div>
-                <span class="muted" style="font-size:11px">Renda fixa mensal</span>
-                <strong>${money(fixed)}</strong>
-                <div class="progress" style="width:160px"><span style="width:72%"></span></div>
-            </div>
-        </div>
-        <div class="card goal-card">
-            <div class="bigicon">＄</div>
-            <div>
-                <span class="muted" style="font-size:11px">Renda variável</span>
-                <strong>${money(variable)}</strong>
-                <div class="progress" style="width:160px"><span style="width:30%"></span></div>
-            </div>
-        </div>
-    </div>
+    ${incomeCards()}
     <div class="card">
         <h3 class="section-title">Minhas metas</h3>
         <p class="muted" style="font-size:11px;margin-top:-7px">Acompanhe o progresso das suas metas e mantenha o foco nos seus objetivos.</p>
@@ -946,7 +1028,12 @@ $('expenseForm').onsubmit = async e => {
 async function deleteExpense(id) {
     const lancamento = expenses.find(e => Number(e.id) === Number(id));
 
-    if (!confirm(`Deseja excluir o lançamento "${lancamento?.description || id}"?`)) {
+    const confirmado = await confirmDialog({
+        title: 'Excluir lançamento?',
+        message: `Tem certeza que deseja excluir o lançamento "${lancamento?.description || id}"? Esta ação não poderá ser desfeita.`
+    });
+
+    if (!confirmado) {
         return;
     }
 
@@ -962,44 +1049,97 @@ async function deleteExpense(id) {
 }
 
 // ==========================================
-// CATEGORIAS (criar, renomear, remover)
+// CATEGORIAS (criar, editar, remover)
 // ==========================================
 
-// Solicita o nome e grava a nova categoria no banco.
-async function addCategory() {
-    const nome = prompt('Nome da nova categoria:');
-    if (!nome || !nome.trim()) return;
+// Abre o popup de categoria. Sem ID cria uma nova; com ID edita a existente.
+function openCategory(id = null) {
+    editingCategoryId = id;
 
-    try {
-        const resultado = await callApi('api/categorias/criar.php', { name: nome.trim() });
+    const f = $('categoryForm');
+    f.reset();
 
-        toast(resultado.mensagem);
-        await loadCategoriesFromDatabase();
-    } catch (erro) {
-        console.error('Erro ao cadastrar categoria:', erro);
-        toast(erro.message);
+    const categoria = id !== null ? categories.find(c => c.id === id) : null;
+    const editando = Boolean(categoria);
+
+    $('categoryModal').classList.toggle('modal-edit', editando);
+    $('categoryModalIcon').hidden = !editando;
+    $('categoryModalTitle').textContent = editando ? 'Editar categoria' : 'Nova categoria';
+    $('categoryModalSubtitle').textContent = editando ? categoria.name : 'Organize seus gastos por categoria';
+    $('categorySubmit').textContent = editando ? 'Salvar alterações' : 'Criar categoria';
+
+    if (editando) {
+        $('categoryModalIcon').textContent = iconFor(categoria.name);
+        f.elements.name.value = categoria.name;
     }
+
+    $('categoryModalBack').classList.add('show');
+    f.elements.name.focus();
 }
 
-// Renomeia a categoria no banco; os lançamentos acompanham pelo ID.
-async function renameCategory(id) {
-    const categoria = categories.find(c => c.id === id);
-    if (!categoria) return;
+function closeCategory() {
+    $('categoryModalBack').classList.remove('show');
+    editingCategoryId = null;
+}
 
-    const nome = prompt('Novo nome para ' + categoria.name + ':', categoria.name);
-    if (!nome || !nome.trim() || nome.trim() === categoria.name) return;
+$('closeCategory').onclick = $('cancelCategory').onclick = closeCategory;
+
+// Fecha ao clicar no fundo escurecido ou pressionar Esc.
+$('categoryModalBack').addEventListener('click', (e) => {
+    if (e.target.id === 'categoryModalBack') closeCategory();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeCategory();
+});
+
+// Mantidas com os nomes antigos porque o restante da tela chama estas funções.
+function addCategory() {
+    openCategory();
+}
+
+function renameCategory(id) {
+    openCategory(id);
+}
+
+// Grava a categoria (nova ou editada) no banco.
+$('categoryForm').onsubmit = async (e) => {
+    e.preventDefault();
+
+    const nome = e.currentTarget.elements.name.value.trim();
+
+    if (!nome) {
+        toast('Informe o nome da categoria.');
+        return;
+    }
+
+    const id = editingCategoryId;
+    const categoria = id !== null ? categories.find(c => c.id === id) : null;
+
+    // Nada mudou: apenas fecha o popup.
+    if (categoria && categoria.name === nome) {
+        closeCategory();
+        return;
+    }
 
     try {
-        const resultado = await callApi('api/categorias/editar.php', { id, name: nome.trim() });
+        const resultado = categoria
+            ? await callApi('api/categorias/editar.php', { id, name: nome })
+            : await callApi('api/categorias/criar.php', { name: nome });
 
+        closeCategory();
         toast(resultado.mensagem);
+
         await loadCategoriesFromDatabase();
-        await loadExpensesFromDatabase();
+
+        // Lançamentos acompanham o novo nome da categoria.
+        if (categoria) {
+            await loadExpensesFromDatabase();
+        }
     } catch (erro) {
-        console.error('Erro ao renomear categoria:', erro);
+        console.error('Erro ao salvar categoria:', erro);
         toast(erro.message);
     }
-}
+};
 
 // Remove a categoria no banco; o PHP também recusa se houver lançamentos usando-a.
 async function removeCategory(id) {
@@ -1007,11 +1147,21 @@ async function removeCategory(id) {
     if (!categoria) return;
 
     if (expenses.some(e => e.category === categoria.name)) {
-        alert('Esta categoria possui lançamentos. Reatribua ou exclua esses lançamentos antes de removê-la.');
+        await confirmDialog({
+            title: 'Não é possível excluir',
+            message: 'Esta categoria possui lançamentos. Reatribua ou exclua esses lançamentos antes de removê-la.',
+            confirmLabel: 'Entendi',
+            info: true
+        });
         return;
     }
 
-    if (!confirm('Remover a categoria ' + categoria.name + '?')) return;
+    const confirmado = await confirmDialog({
+        title: 'Excluir categoria?',
+        message: 'Tem certeza que deseja excluir a categoria "' + categoria.name + '"? Esta ação não poderá ser desfeita.'
+    });
+
+    if (!confirmado) return;
 
     try {
         const resultado = await callApi('api/categorias/excluir.php', { id });
@@ -1108,7 +1258,7 @@ document.getElementById('goalForm').onsubmit = async (e) => {
 // ATUALIZAR PROGRESSO DA META
 // ==========================================
 
-async function editGoal(id) {
+function editGoal(id) {
 
     // Localiza a meta.
     const meta = goals.find(
@@ -1120,37 +1270,62 @@ async function editGoal(id) {
         return;
     }
 
-    // Solicita o novo valor acumulado.
-    const valor = prompt(
-        'Quanto você já guardou para ' + meta.name + '? (R$)',
-        meta.saved
-    );
+    // Preenche o popup com os valores atuais.
+    const f = $('goalEditForm');
 
-    if (valor === null) {
-        return;
+    f.elements.id.value = meta.id;
+    f.elements.name.value = meta.name;
+    f.elements.target.value = meta.target;
+    f.elements.due.value = meta.due;
+    f.elements.saved.value = meta.saved;
+
+    const iconeAtual = meta.icon || '◎';
+    const selIcon = f.elements.icon;
+
+    if (![...selIcon.options].some(o => o.value === iconeAtual)) {
+        selIcon.add(new Option(iconeAtual, iconeAtual));
     }
+    selIcon.value = iconeAtual;
 
-    // Aceita valores com vírgula ou ponto decimal.
-    const valorNumerico = Number(valor.replace(',', '.'));
+    $('goalEditIcon').textContent = meta.icon || '◎';
+    $('goalEditSubtitle').textContent = meta.name;
 
-    if (
-        valor.trim() === '' ||
-        !Number.isFinite(valorNumerico) ||
-        valorNumerico < 0
-    ) {
-        toast('Informe um valor válido.');
-        return;
-    }
+    const p = Math.min(100, meta.saved / meta.target * 100);
+    $('goalEditBar').style.width = p + '%';
+    $('goalEditPercent').textContent = Math.round(p) + '% concluído';
 
-    const dados = new FormData();
+    $('goalEditModalBack').classList.add('show');
+    f.elements.name.focus();
+}
 
-    dados.append('id', id);
-    dados.append('saved', valorNumerico);
+function closeGoalEdit() {
+    $('goalEditModalBack').classList.remove('show');
+}
+
+$('closeGoalEdit').onclick = $('cancelGoalEdit').onclick = closeGoalEdit;
+
+// Fecha ao clicar no fundo escurecido ou pressionar Esc.
+$('goalEditModalBack').addEventListener('click', (e) => {
+    if (e.target.id === 'goalEditModalBack') closeGoalEdit();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeGoalEdit();
+});
+
+// Salva todos os campos da meta editados no popup.
+$('goalEditForm').onsubmit = async (e) => {
+
+    e.preventDefault();
+
+    const f = e.currentTarget;
+
+    // Captura os campos do formulário (id, name, target, saved, due, icon).
+    const dados = new FormData(f);
 
     try {
 
         const resposta = await fetch(
-            'api/metas/progresso.php',
+            'api/metas/editar.php',
             {
                 method: 'POST',
                 body: dados
@@ -1174,6 +1349,8 @@ async function editGoal(id) {
             );
         }
 
+        closeGoalEdit();
+
         // Busca novamente os registros.
         await loadGoalsFromDatabase();
 
@@ -1185,7 +1362,7 @@ async function editGoal(id) {
 
         toast(erro.message);
     }
-}
+};
 
 // ==========================================
 // CANCELAR META
@@ -1202,7 +1379,12 @@ async function deleteGoal(id) {
         return;
     }
 
-    if (!confirm('Deseja cancelar a meta "' + meta.name + '"?')) {
+    const confirmado = await confirmDialog({
+        title: 'Excluir meta?',
+        message: 'Tem certeza que deseja excluir a meta "' + meta.name + '"? Esta ação não poderá ser desfeita.'
+    });
+
+    if (!confirmado) {
         return;
     }
 
@@ -1359,6 +1541,107 @@ window.addEventListener('resize', () => {
 });
 
 // ==========================================
+// LUCROS (fixo e variável)
+// ==========================================
+
+// Converte "1.000,50" ou "1000.50" em número. Devolve NaN se não for válido.
+function parseMoney(texto) {
+    let t = String(texto).trim().replace(/\s|R\$/g, '');
+
+    if (t === '') return NaN;
+
+    // Com vírgula: formato brasileiro (ponto = milhar, vírgula = decimal).
+    if (t.includes(',')) {
+        t = t.replace(/\./g, '').replace(',', '.');
+    } else if (/^\d{1,3}(\.\d{3})+$/.test(t)) {
+        // Sem vírgula e só pontos de milhar (ex.: 2.500): remove os pontos.
+        t = t.replace(/\./g, '');
+    }
+
+    return /^\d+(\.\d+)?$/.test(t) ? Number(t) : NaN;
+}
+
+// Atualiza o resumo (total, fixo, variável) e a dica do popup.
+function refreshIncomePopup() {
+    const totalLucros = income.fixo + income.variavel;
+    const pctFixo = totalLucros > 0 ? Math.round(income.fixo / totalLucros * 100) : 0;
+    const pctVar = totalLucros > 0 ? 100 - pctFixo : 0;
+
+    $('incomeTotal').textContent = money(totalLucros);
+    $('incomeFixed').textContent = money(income.fixo);
+    $('incomeVariable').textContent = money(income.variavel);
+    $('incomeFixedPct').textContent = '(' + pctFixo + '%)';
+    $('incomeVariablePct').textContent = '(' + pctVar + '%)';
+
+    const f = $('incomeForm');
+    const nomeTipo = f.elements.tipo.value === 'FIXA' ? 'lucro fixo' : 'lucro variável';
+
+    $('incomeHint').textContent = f.elements.modo.value === 'adicionar'
+        ? 'O valor será somado ao ' + nomeTipo + ' deste mês.'
+        : 'O valor trocará todo o ' + nomeTipo + ' deste mês.';
+}
+
+// Abre o popup de lucros com o tipo (FIXA ou VARIAVEL) já selecionado.
+function openIncome(tipo = 'FIXA') {
+    const f = $('incomeForm');
+
+    f.reset();
+    f.elements.tipo.value = tipo;
+    refreshIncomePopup();
+
+    $('incomeModalBack').classList.add('show');
+    f.elements.valor.focus();
+}
+
+function closeIncome() {
+    $('incomeModalBack').classList.remove('show');
+}
+
+$('closeIncome').onclick = $('cancelIncome').onclick = closeIncome;
+
+// Fecha ao clicar no fundo escurecido ou pressionar Esc.
+$('incomeModalBack').addEventListener('click', (e) => {
+    if (e.target.id === 'incomeModalBack') closeIncome();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeIncome();
+});
+
+// A dica muda ao trocar entre adicionar/substituir e fixo/variável.
+$('incomeForm').addEventListener('change', refreshIncomePopup);
+
+// Grava o valor informado no banco.
+$('incomeForm').onsubmit = async (e) => {
+    e.preventDefault();
+
+    const f = e.currentTarget;
+    const modo = f.elements.modo.value;
+    const valor = parseMoney(f.elements.valor.value);
+
+    if (!Number.isFinite(valor) || valor < 0 || (modo === 'adicionar' && valor <= 0)) {
+        toast('Informe um valor válido.');
+        return;
+    }
+
+    try {
+        const resultado = await callApi('api/receitas/salvar.php', {
+            modo,
+            tipo: f.elements.tipo.value,
+            valor,
+            data: todayISO()
+        });
+
+        closeIncome();
+        toast(resultado.mensagem);
+
+        await loadIncomeFromDatabase();
+    } catch (erro) {
+        console.error('Erro ao salvar lucro:', erro);
+        toast(erro.message);
+    }
+};
+
+// ==========================================
 // INICIALIZAÇÃO
 // ==========================================
 
@@ -1368,4 +1651,5 @@ render();
 loadUserFromSession();
 loadCategoriesFromDatabase();
 loadExpensesFromDatabase();
+loadIncomeFromDatabase();
 loadGoalsFromDatabase();
