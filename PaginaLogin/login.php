@@ -11,6 +11,9 @@ unset($_SESSION["auth_error"], $_SESSION["auth_success"]);
 if (isset($_GET["cadastro"]) && $_GET["cadastro"] === "sucesso") {
     $mensagemSucesso = "Cadastro realizado com sucesso! Faça login para continuar.";
 }
+if (isset($_GET["senha"]) && $_GET["senha"] === "alterada") {
+    $mensagemSucesso = "Senha alterada com sucesso! Faça login.";
+}
 ?>
 
 <!DOCTYPE html>

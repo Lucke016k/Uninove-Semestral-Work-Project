@@ -1,17 +1,13 @@
 <?php
 session_start();
 
-// Verifica se existe um usuário conectado
 if (!isset($_SESSION["usuario"])) {
     header("Location: PaginaLogin/login.php");
     exit;
 }
 
-// Recupera os dados cadastrados na sessão
-echo "<pre>";
-var_dump($_SESSION);
-echo "</pre>";
-exit;
+$nome  = $_SESSION["usuario"]["nome"]  ?? "";
+$email = $_SESSION["usuario"]["email"] ?? "";
 ?>
 
 <!DOCTYPE html>

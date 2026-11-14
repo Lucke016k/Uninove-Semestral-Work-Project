@@ -14,8 +14,7 @@ if ($email === "") {
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit("Digite um e-mail válido.");
 }
-
-require_once "../config/conexao.php";
+__DIR__ . "/../config/conexao.php";
 require_once "../config/email.php";
 
 try {

@@ -52,10 +52,6 @@ function enviarEmailRecuperacao($destinatario, $nome, $link)
 
         error_log("Erro no envio do Gmail: " . $mail->ErrorInfo);
 
-        echo "<pre>Erro no envio do Gmail: "
-            . htmlspecialchars($mail->ErrorInfo, ENT_QUOTES, "UTF-8")
-            . "</pre>";
-
         return false;
     }
 }

@@ -2,6 +2,12 @@
 
 session_start();
 
+// Limpa os dados do usuário anterior
+unset($_SESSION["usuario"]);
+
+// Limpa possíveis erros antigos
+unset($_SESSION["auth_error"]);
+
 // Aceita somente requisições POST
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: login.php");
@@ -15,7 +21,6 @@ require_once __DIR__ . "/../config/conexao.php";
 $email = trim($_POST["email"] ?? "");
 $senha = $_POST["senha"] ?? "";
 
-error_log("Tamanho da senha recebida: " . strlen($senha));
 
 // Validação dos campos
 if ($email === "" || $senha === "") {
@@ -54,11 +59,6 @@ if (!$usuario) {
     die("USUÁRIO NÃO ENCONTRADO NA CONSULTA.");
 }
 
-// Verificando se a senha confere
-// Verificando se o usuário foi encontrado
-if (!$usuario) {
-    die("USUÁRIO NÃO ENCONTRADO NA CONSULTA.");
-}
 
 // Verificando se a senha confere
 if (!password_verify($senha, $usuario["SENHA_HASH"])) {
