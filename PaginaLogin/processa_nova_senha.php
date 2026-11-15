@@ -1,5 +1,4 @@
 <?php
-
 session_start();
 date_default_timezone_set("America/Sao_Paulo");
 
@@ -10,25 +9,37 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 
 require_once __DIR__ . "/../config/conexao.php";
 
-$token = trim($_POST["token"] ?? "");
-$senha = $_POST["senha"] ?? "";
+$token     = trim($_POST["token"] ?? "");
+$senha     = $_POST["senha"] ?? "";
 $confirmar = $_POST["confirmar_senha"] ?? "";
 
-if ($token === "" || $senha === "" || $confirmar === "") {
-    exit("Preencha todos os campos.");
+// Volta para a tela de nova senha com a mensagem em vermelho.
+// Se o token estiver inválido ou expirado, a própria tela mostra o aviso de link.
+function voltarComErro(string $mensagem, string $token): void
+{
+    $_SESSION["auth_error"] = $mensagem;
+    header("Location: nova_senha.php?token=" . urlencode($token));
+    exit;
+}
+
+if ($token === "") {
+    header("Location: nova_senha.php");
+    exit;
+}
+
+if ($senha === "" || $confirmar === "") {
+    voltarComErro("Preencha todos os campos.", $token);
 }
 
 if (strlen($senha) < 8) {
-    exit("A senha deve ter pelo menos 8 caracteres.");
+    voltarComErro("A senha deve ter pelo menos 8 caracteres.", $token);
 }
 
 if ($senha !== $confirmar) {
-    exit("As senhas não são iguais.");
+    voltarComErro("As senhas não são iguais.", $token);
 }
 
 try {
-
-    $tokenHash = hash("sha256", $token);
 
     $stmt = $pdo->prepare(
         "SELECT ID_RECUPERACAO, ID_USUARIO, EXPIRA_EM
@@ -37,14 +48,14 @@ try {
          AND UTILIZADO = 0
          LIMIT 1"
     );
-    $stmt->execute([":token" => $tokenHash]);
+    $stmt->execute([":token" => hash("sha256", $token)]);
     $registro = $stmt->fetch();
 
+    // Link inválido, já usado ou expirado: a tela nova_senha.php explica e orienta.
     if (!$registro || strtotime($registro["EXPIRA_EM"]) < time()) {
-        exit("Link inválido ou expirado. Solicite um novo.");
+        header("Location: nova_senha.php?token=" . urlencode($token));
+        exit;
     }
-
-    $novoHash = password_hash($senha, PASSWORD_BCRYPT);
 
     $pdo->beginTransaction();
 
@@ -52,8 +63,8 @@ try {
         "UPDATE usuario SET SENHA_HASH = :hash WHERE ID_USUARIO = :id"
     );
     $stmt->execute([
-        ":hash" => $novoHash,
-        ":id" => $registro["ID_USUARIO"]
+        ":hash" => password_hash($senha, PASSWORD_DEFAULT),
+        ":id"   => $registro["ID_USUARIO"]
     ]);
 
     $stmt = $pdo->prepare(
@@ -72,6 +83,7 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
+
     error_log($erro->getMessage());
-    exit("Não foi possível alterar a senha. Tente novamente.");
+    voltarComErro("Não foi possível alterar a senha. Tente novamente.", $token);
 }

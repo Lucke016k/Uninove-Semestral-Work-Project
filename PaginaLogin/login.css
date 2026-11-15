@@ -275,6 +275,24 @@
     color: var(--green, #244f3b);
 }
 
+.auth-steps {
+    margin: 0 0 22px;
+    padding-left: 20px;
+    color: var(--muted, #7d887b);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.auth-steps strong {
+    color: var(--text, #27392e);
+}
+
+.auth-button-link {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+}
+
 /* RESPONSIVIDADE */
 
 @media (max-width: 480px) {
