@@ -693,7 +693,15 @@
     .goal-line .actions{
         display:none
     }
-    .goal-amount{
+      .goal-amount{
         font-size:10px
     }
+}
+
+.profile .setting-row > div,
+.profile .setting-row > div strong,
+.profile .setting-row > div small {
+    display: block !important;
+    text-align: left !important;
+    margin-left: 0 !important;
 }

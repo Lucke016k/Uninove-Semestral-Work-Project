@@ -800,24 +800,24 @@ function settingsPage() {
         <div class="grid">
             <div class="card profile">
                 <div class="avatar">♙</div>
-                <h3>Minha conta</h3>
+                 <h3>Minha conta</h3>
                 <p class="muted" style="font-size:11px">Gerencie suas informações pessoais e de acesso.</p>
                 <div class="setting-row">
-                    <div><strong>Nome</strong><small>${esc(user.name || 'Usuário')}</small></div>
+                    <div style="text-align:left"><strong style="display:block;text-align:left">Nome</strong><small style="display:block;text-align:left">${esc(user.name || 'Usuário')}</small></div>
                     <button class="btn" onclick="editProfile()">Editar</button>
                 </div>
                 <div class="setting-row">
-                    <div><strong>E-mail</strong><small>${esc(user.email || 'Não informado')}</small></div>
+                    <div style="text-align:left"><strong style="display:block;text-align:left">E-mail</strong><small style="display:block;text-align:left;overflow-wrap:anywhere">${esc(user.email || 'Não informado')}</small></div>
                 </div>
                 <div class="setting-row">
-                    <div><strong>Plano atual</strong><small>Gratuito</small></div>
+                    <div style="text-align:left"><strong style="display:block;text-align:left">Plano atual</strong><small style="display:block;text-align:left">Gratuito</small></div>
                     <span class="tag">Ativo</span>
                 </div>
                 <button class="btn" style="width:100%;margin-top:12px" onclick="editProfile()">Editar perfil</button>
             </div>
             <div class="card">
                 <h3 class="section-title">Sessão</h3>
-                <p class="muted" style="font-size:12px">Você está usando o protótipo local do Controle Financeiro.</p>
+                <p class="muted" style="font-size:12px">Você está conectado como ${esc(user.email || 'usuário')}.</p>
                 <button class="btn danger" onclick="window.location.href='PaginaLogin/logout.php'">Sair da conta</button>
             </div>
         </div>
@@ -1310,19 +1310,32 @@ async function loadGoalsFromDatabase() {
 // PERFIL, DADOS E LOGIN
 // ==========================================
 
-// Edita nome/e-mail localmente. Na versão real, virão da sessão e da tabela usuario.
-function editProfile() {
+// Edita nome e e-mail e grava no banco pelo PHP.
+async function editProfile() {
     const nome = prompt('Seu nome:', user.name || '');
     if (nome === null) return;
 
     const email = prompt('Seu e-mail:', user.email || '');
     if (email === null) return;
 
-    user = { name: nome.trim() || 'Usuário', email: email.trim() };
-    $('userLabel').textContent = user.name;
-    save();
-    render();
-    toast('Perfil atualizado.');
+    try {
+        const resultado = await callApi('api/perfil/editar.php', {
+            name: nome.trim(),
+            email: email.trim()
+        });
+
+        user = {
+            name: resultado.usuario.nome,
+            email: resultado.usuario.email
+        };
+
+        $('userLabel').textContent = user.name;
+        render();
+        toast(resultado.mensagem);
+    } catch (erro) {
+        console.error('Erro ao atualizar perfil:', erro);
+        toast(erro.message);
+    }
 }
 
 // Exporta os dados carregados para um arquivo JSON.
