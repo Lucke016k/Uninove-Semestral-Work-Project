@@ -103,7 +103,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperação de senha - MeuSaldo</title>
+    <title>Recuperação de senha - UniFinance</title>
 
     <link rel="stylesheet" href="./login.css">
 </head>
@@ -129,7 +129,7 @@ try {
                 </svg>
             </div>
 
-            <h1>MeuSaldo</h1>
+            <h1>UniFinance</h1>
             <p>Controle financeiro pessoal</p>
         </header>
 
