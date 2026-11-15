@@ -11,7 +11,7 @@ unset($_SESSION["auth_error"]);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperar senha - MeuSaldo</title>
+    <title>Recuperar senha - UniFinance</title>
 
     <link rel="stylesheet" href="./login.css">
 </head>
@@ -39,7 +39,7 @@ unset($_SESSION["auth_error"]);
         <path d="M7 5V4a2 2 0 0 1 2-2h8"/>
     </svg>
 </div>
-            <h1>MeuSaldo</h1>
+            <h1>UniFinance</h1>
             <p>Controle financeiro pessoal</p>
         </header>
 

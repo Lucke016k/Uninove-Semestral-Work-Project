@@ -13,11 +13,11 @@ if (!isset($_SESSION["usuario"])) {
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>MeuSaldo - Início</title>
+    <title>UniFinance - Início</title>
 </head>
 <body>
 
-    <h1>Bem-vindo ao MeuSaldo!</h1>
+    <h1>Bem-vindo ao UniFinance!</h1>
 
     <p>Login realizado com sucesso.</p>
 

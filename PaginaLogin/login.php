@@ -22,7 +22,7 @@ if (isset($_GET["senha"]) && $_GET["senha"] === "alterada") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Entrar - MeuSaldo</title>
+    <title>Entrar - UniFinance</title>
 
     <!-- CSS principal do projeto -->
     <link rel="stylesheet" href="login.css">
@@ -52,7 +52,7 @@ if (isset($_GET["senha"]) && $_GET["senha"] === "alterada") {
     </svg>
 </div>
 
-            <h1>MeuSaldo</h1>
+            <h1>UniFinance</h1>
             <p>Seus gastos, seus objetivos.</p>
         </header>
 
