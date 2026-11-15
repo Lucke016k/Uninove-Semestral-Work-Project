@@ -14,6 +14,13 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
+function voltarComErro(string $mensagem): void
+{
+    $_SESSION["auth_error"] = $mensagem;
+    header("Location: login.php");
+    exit;
+}
+
 // Conexão central do projeto
 require_once __DIR__ . "/../config/conexao.php";
 
@@ -56,13 +63,13 @@ try {
     // Verificando usuário e senha
     // Verificando se o usuário foi encontrado
 if (!$usuario) {
-    die("USUÁRIO NÃO ENCONTRADO NA CONSULTA.");
+    voltarComErro("Usuário ou senha incorretos");
 }
 
 
 // Verificando se a senha confere
 if (!password_verify($senha, $usuario["SENHA_HASH"])) {
-    die("USUÁRIO ENCONTRADO, MAS A SENHA NÃO CONFERE.");
+    voltarComErro("Usuário ou senha incorretos");
 }
     // Proteção da sessão
     session_regenerate_id(true);

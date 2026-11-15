@@ -1,4 +1,13 @@
 <?php
+session_start();
+date_default_timezone_set("America/Sao_Paulo");
+
+function voltarComErro(string $mensagem): void
+{
+    $_SESSION["auth_error"] = $mensagem;
+    header("Location: esqueci_senha.php");
+    exit;
+}
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: esqueci_senha.php");
@@ -8,16 +17,19 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 $email = trim($_POST["email"] ?? "");
 
 if ($email === "") {
-    exit("Informe seu e-mail.");
+    voltarComErro("Informe seu e-mail.");
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    exit("Digite um e-mail válido.");
+    voltarComErro("Digite um e-mail válido.");
 }
-require_once __DIR__ . "/../config/conexao.php";
-require_once "../config/email.php";
+
+
+require_once dirname(__DIR__) . "/config/conexao.php";
+require_once dirname(__DIR__) . "/config/email.php";
 
 try {
+
 
     $sql = "SELECT ID_USUARIO, NOME
             FROM usuario
@@ -28,6 +40,8 @@ try {
     $stmt->execute(["email" => $email]);
 
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+   
 
     $mensagem = "Se o e-mail estiver cadastrado, você receberá as instruções para recuperar sua senha.";
 
@@ -67,20 +81,18 @@ try {
 
         if (!$enviado) {
             error_log("Não foi possível enviar o e-mail de recuperação.");
+            voltarComErro("Não foi possível enviar o e-mail. Tente novamente mais tarde.");
         }
-    }
-    else{
-        echo "<script>
-        alert('usuário inválido, tente novamente!');
-        window.location.href = 'esqueci_senha.php';
-        </script>";
-        exit;
+
+    } else {
+
+        voltarComErro("Não encontramos uma conta ativa com esse e-mail.");
+
     }
 
 } catch (PDOException $e) {
-
-    error_log($e->getMessage());
-    $mensagem = "Não foi possível processar a solicitação. Tente novamente mais tarde.";
+      error_log($e->getMessage());
+    voltarComErro("Não foi possível processar a solicitação. Tente novamente mais tarde.");
 
 }
 

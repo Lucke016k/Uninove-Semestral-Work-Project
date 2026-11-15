@@ -1,3 +1,11 @@
+<?php
+session_start();
+
+// Recupera mensagens enviadas pelo backend.
+$mensagemErro = $_SESSION["auth_error"] ?? "";
+
+unset($_SESSION["auth_error"]);
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -38,6 +46,12 @@
         <main class="auth-card">
 
             <h2>Recuperar senha</h2>
+
+            <?php if (!empty($mensagemErro)): ?>
+                <div class="auth-message error">
+                    <?= htmlspecialchars($mensagemErro, ENT_QUOTES, "UTF-8") ?>
+                </div>
+            <?php endif; ?>
 
             <p class="auth-description">
                 Informe seu e-mail para receber o link de recuperação da sua senha.
