@@ -46,7 +46,6 @@ $data = $_POST['date'] ?? '';
 $categoria = trim($_POST['category'] ?? '');
 $pagamento = $_POST['payment'] ?? '';
 $responsavel = trim($_POST['who'] ?? 'Eu');
-$local = $_POST['place'] ?? '';
 $parcelado = $_POST['installments'] ?? 'Não';
 
 // Converte o valor para o número.
@@ -205,13 +204,6 @@ try {
         ]);
     }
 
-    if (!in_array($local, ['Casa', 'Filial'], true)) {
-        responder(400, [
-            'sucesso' => false,
-            'erro' => 'Local inválido.'
-        ]);
-    }
-
     // Atualiza os dados do lançamento.
     $sql = "
         UPDATE lancamento
@@ -221,8 +213,7 @@ try {
             DESCRICAO = :descricao,
             VALOR = :valor,
             DATA_LANCAMENTO = :data,
-            RESPONSAVEL = :responsavel,
-            LOCAL_GASTO = :local
+            RESPONSAVEL = :responsavel
 
         WHERE ID_LANCAMENTO = :id
         AND ID_USUARIO = :usuario
@@ -240,7 +231,6 @@ try {
         ':valor' => $valor,
         ':data' => $data,
         ':responsavel' => $responsavel,
-        ':local' => $local,
         ':id' => $idLancamento,
         ':usuario' => $idUsuario
     ]);

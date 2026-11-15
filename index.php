@@ -166,13 +166,6 @@ if (!isset($_SESSION["usuario"])) {
                         <input name="who" value="Eu" placeholder="Nome">
                     </div>
                     <div class="form-group">
-                        <label>Local</label>
-                        <select name="place">
-                            <option>Casa</option>
-                            <option>Filial</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
                         <label>Parcelado?</label>
                         <select name="installments">
                             <option value="Não">Não</option>

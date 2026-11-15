@@ -41,7 +41,6 @@ $data = $_POST['date'] ?? '';
 $categoria = trim($_POST['category'] ?? '');
 $pagamento = $_POST['payment'] ?? '';
 $responsavel = trim($_POST['who'] ?? 'Eu');
-$local = $_POST['place'] ?? '';
 $parcelado = $_POST['installments'] ?? 'Não';
 
 // Verifica os Campos obrigatórios.
@@ -76,9 +75,7 @@ if (!empty($camposInvalidos)) {
         'erro' => 'Campos inválidos: ' .
                   implode(', ', $camposInvalidos)
     ]);
-
 }
-
 
 // Valida o formato e a existência da data.
 $partesData = explode('-', $data);
@@ -186,8 +183,7 @@ try{
             VALOR,
             DATA_LANCAMENTO,
             TIPO,
-            RESPONSAVEL,
-            LOCAL_GASTO
+            RESPONSAVEL
         )
         VALUES(
             :usuario,
@@ -197,8 +193,7 @@ try{
             :valor,
             :data,
             'DESPESA',
-            :responsavel,
-            :local
+            :responsavel
         )
     ";
 
@@ -214,7 +209,6 @@ try{
         ':valor' => $valor,
         ':data' => $data,
         ':responsavel' => $responsavel,
-        ':local' => $local
     ]);
 
     // Recupera o ID gerado pelo AUTO_INCREMENT.

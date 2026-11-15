@@ -52,7 +52,6 @@ try {
             END AS payment,
 
             l.RESPONSAVEL AS who,
-            l.LOCAL_GASTO AS place,
             'Não' AS installments
 
         FROM lancamento l

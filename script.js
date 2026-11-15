@@ -850,29 +850,7 @@ function settingsPage() {
                     <div><strong>Aparência</strong><small>Escolha o tema visual do aplicativo</small></div>
                     <span class="tag">Bege + verde</span>
                 </div>
-                <div class="setting-row">
-                    <div><strong>Notificações</strong><small>Gerencie avisos e lembretes</small></div>
-                    <label><input type="checkbox" id="notifications" checked> Ativas</label>
-                </div>
-                <div class="setting-row">
-                    <div><strong>Moeda</strong><small>Moeda padrão para seus gastos</small></div>
-                    <span>Real (R$)</span>
-                </div>
-                <div class="setting-row">
-                    <div><strong>Idioma</strong><small>Idioma de exibição do sistema</small></div>
-                    <span>Português (Brasil)</span>
-                </div>
-                <div class="setting-row">
-                    <div><strong>Backup</strong><small>Baixe uma cópia dos seus dados em JSON</small></div>
-                    <button class="btn" onclick="exportData()">Exportar dados</button>
-                </div>
-            </div>
-            <div class="card">
                 <h3 class="section-title">Dados e privacidade</h3>
-                <div class="setting-row">
-                    <div><strong>Exportar dados</strong><small>Baixe seus lançamentos e metas em JSON</small></div>
-                    <button class="btn" onclick="exportData()">Exportar</button>
-                </div>
                 <div class="setting-row">
                     <div><strong>Limpar dados locais</strong><small>Apague as metas e o perfil salvos neste navegador</small></div>
                     <button class="btn danger" onclick="clearData()">Limpar</button>
@@ -890,10 +868,6 @@ function settingsPage() {
                 </div>
                 <div class="setting-row">
                     <div><strong>E-mail</strong><small>${esc(user.email || 'Não informado')}</small></div>
-                </div>
-                <div class="setting-row">
-                    <div><strong>Plano atual</strong><small>Gratuito</small></div>
-                    <span class="tag">Ativo</span>
                 </div>
                 <button class="btn" style="width:100%;margin-top:12px" onclick="editProfile()">Editar perfil</button>
             </div>
@@ -983,7 +957,6 @@ function openExpense(id = null) {
             f.elements.category.value = e.category;
             f.elements.payment.value = e.payment;
             f.elements.who.value = e.who;
-            f.elements.place.value = e.place;
             f.elements.installments.value = e.installments;
         }
     }
@@ -1497,29 +1470,11 @@ function editProfile() {
     const nome = prompt('Seu nome:', user.name || '');
     if (nome === null) return;
 
-    const email = prompt('Seu e-mail:', user.email || '');
-    if (email === null) return;
-
-    user = { name: nome.trim() || 'Usuário', email: email.trim() };
+    user = { name: nome.trim() || 'Usuário'};
     $('userLabel').textContent = user.name;
     save();
     render();
     toast('Perfil atualizado.');
-}
-
-// Exporta os dados carregados para um arquivo JSON.
-function exportData() {
-    const blob = new Blob(
-        [JSON.stringify({ expenses, goals, categories, user }, null, 2)],
-        { type: 'application/json' }
-    );
-    const link = document.createElement('a');
-
-    link.href = URL.createObjectURL(blob);
-    link.download = 'controle-financeiro-dados.json';
-    link.click();
-    URL.revokeObjectURL(link.href);
-    toast('Exportação iniciada.');
 }
 
 // Apaga as metas e o perfil salvos no navegador. Não apaga dados do MySQL.
