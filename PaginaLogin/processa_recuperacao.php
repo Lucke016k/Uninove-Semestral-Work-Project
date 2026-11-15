@@ -14,7 +14,7 @@ if ($email === "") {
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit("Digite um e-mail válido.");
 }
-__DIR__ . "/../config/conexao.php";
+require_once __DIR__ . "/../config/conexao.php";
 require_once "../config/email.php";
 
 try {
@@ -68,6 +68,13 @@ try {
         if (!$enviado) {
             error_log("Não foi possível enviar o e-mail de recuperação.");
         }
+    }
+    else{
+        echo "<script>
+        alert('usuário inválido, tente novamente!');
+        window.location.href = 'esqueci_senha.php';
+        </script>";
+        exit;
     }
 
 } catch (PDOException $e) {
