@@ -114,7 +114,6 @@ unset($_SESSION["auth_error"]);
                             id="senha"
                             name="senha"
                             placeholder="Crie uma senha"
-                            minlength="6"
                             autocomplete="new-password"
                             required
                         >
@@ -139,7 +138,6 @@ unset($_SESSION["auth_error"]);
                             id="confirmar_senha"
                             name="confirmar_senha"
                             placeholder="Digite a senha novamente"
-                            minlength="6"
                             autocomplete="new-password"
                             required
                         >
