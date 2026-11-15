@@ -33,7 +33,10 @@ let expenses = [];   // Vem de api/lancamentos/listar.php
 let categories = []; // Vem de api/categorias/listar.php: { id, name, global }
 let goals = [];
 let income = { fixo: 0, variavel: 0 }; // Vem de api/receitas/resumo.php (mês atual)
-let user = load('cf_user', { name: 'Usuário', email: '' });
+let user = {
+    name: (window.USUARIO && window.USUARIO.nome) || 'Usuário',
+    email: (window.USUARIO && window.USUARIO.email) || ''
+};
 let page = 'home';
 let editingId = null;
 let paymentFilter = '';
@@ -1525,7 +1528,10 @@ function clearData() {
         localStorage.removeItem('cf_goals');
         localStorage.removeItem('cf_user');
         goals = [];
-        user = { name: 'Usuário', email: '' };
+        user = {
+    name: (window.USUARIO && window.USUARIO.nome) || 'Usuário',
+    email: (window.USUARIO && window.USUARIO.email) || ''
+};
         $('userLabel').textContent = user.name;
         render();
         toast('Dados locais apagados.');

@@ -13,7 +13,6 @@ if (!isset($_SESSION["usuario"])) {
     header("Location: PaginaLogin/login.php");
     exit;
 }
-$usuarioLogado = $_SESSION["usuario"];
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -427,6 +426,14 @@ $usuarioLogado = $_SESSION["usuario"];
     <!-- Mensagens temporárias de sucesso/erro exibidas pelo JavaScript. -->
     <div class="toast" id="toast"></div>
 
+<script>
+    window.USUARIO = <?= json_encode([
+        "nome"  => $_SESSION["usuario"]["nome"]  ?? "Usuário",
+        "email" => $_SESSION["usuario"]["email"] ?? ""
+    ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+</script>
+
     <script src="script.js"></script>
+    
 </body>
 </html>
