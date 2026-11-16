@@ -3,7 +3,7 @@
  * Mantém a sessão viva no servidor enquanto o usuário está usando a tela.
  */
 (function () {
-    const TEMPO_INATIVIDADE = 60 * 1000; // 30 minutos
+    const TEMPO_INATIVIDADE = 30 * 60 * 1000; // 30 minutos
     const INTERVALO_PING    = 5 * 60 * 1000;  // renova no servidor a cada 5 min de uso
     const URL_LOGIN         = 'PaginaLogin/login.php?sessao=expirada';
 
