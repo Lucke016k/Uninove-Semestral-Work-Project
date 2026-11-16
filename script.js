@@ -850,11 +850,15 @@ function settingsPage() {
                     <div><strong>Aparência</strong><small>Escolha o tema visual do aplicativo</small></div>
                     <span class="tag">Bege + verde</span>
                 </div>
-                <h3 class="section-title">Dados e privacidade</h3>
                 <div class="setting-row">
-                    <div><strong>Limpar dados locais</strong><small>Apague as metas e o perfil salvos neste navegador</small></div>
-                    <button class="btn danger" onclick="clearData()">Limpar</button>
+                    <div><strong>Excluir Lançamentos</strong><small>Apaga todos os seus lançamentos.</small></div>
+                    <button type="button" onclick="deleteAllExpenses()" class="btn btn-danger"> <i class="bi bi-trash"></i>Excluir lançamentos </button>
                 </div>
+                <div class="setting-row">
+                    <div><strong>Excluir Metas</strong><small>Apaga todas as metas.</small></div>
+                    <button type="button" onclick="deleteAllGoals()" class="btn btn-danger"> <i class="bi bi-trash"></i>Excluir metas </button>
+                </div>
+                
             </div>
         </div>
         <div class="grid">
@@ -1023,6 +1027,62 @@ async function deleteExpense(id) {
         toast(erro.message);
     }
 }
+
+
+async function deleteAllExpenses() {
+
+    const confirmado = await confirmDialog({
+        title: 'Excluir todos os lançamentos?',
+        message: 'Tem certeza que deseja excluir TODOS os seus lançamentos? Esta ação não poderá ser desfeita.'
+    });
+
+    if (!confirmado) {
+        return;
+    }
+
+    try {
+
+        const resultado = await callApi(
+            'api/lancamentos/excluir_todos.php',
+            {}
+        );
+
+        toast(resultado.mensagem);
+
+        await loadExpensesFromDatabase();
+
+    } catch (erro) {
+
+        console.error('Erro ao excluir todos os lançamentos:', erro);
+
+        toast(erro.message);
+    }
+}
+async function deleteAllGoals() {
+    const confirmado = await confirmDialog({
+        title: 'Excluir todas as metas?',
+        message: 'Tem certeza que deseja excluir TODAS as suas metas financeiras? Essa ação não poderá ser desfeita.'
+    });
+
+    if (!confirmado) return;
+
+    try {
+        const resultado = await callApi(
+            'api/metas/excluir_todos.php',
+            {}
+        );
+
+        toast(resultado.mensagem);
+
+        await loadGoalsFromDatabase();
+
+    } catch (erro) {
+         console.error('Erro ao excluir todas metas:', erro);
+
+        toast(erro.message);
+    }
+}
+
 
 // ==========================================
 // CATEGORIAS (criar, editar, remover)
