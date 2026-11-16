@@ -25,11 +25,11 @@ function enviarEmailRecuperacao($destinatario, $nome, $link)
         $mail->Port = 587;
         $mail->CharSet = "UTF-8";
 
-        $mail->setFrom($credenciais["email"], "MeuSaldo");
+        $mail->setFrom($credenciais["email"], "UniFinace");
         $mail->addAddress($destinatario, $nome);
 
         $mail->isHTML(true);
-        $mail->Subject = "Recuperação de senha - MeuSaldo";
+        $mail->Subject = "Recuperação de senha - UniFinance";
 
         $nomeSeguro = htmlspecialchars($nome, ENT_QUOTES, "UTF-8");
         $linkSeguro = htmlspecialchars($link, ENT_QUOTES, "UTF-8");
