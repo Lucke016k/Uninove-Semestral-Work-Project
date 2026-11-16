@@ -1293,3 +1293,67 @@
     overflow-wrap: anywhere;
     margin-top: 4px;
 }
+/* ==========================================
+   DROPDOWN PADRONIZADO (dropdown.js)
+   ========================================== */
+.dd{position:relative;display:block;width:100%;min-width:0}
+.dd.dd-inline{display:inline-block;width:auto;min-width:170px}
+.dd-native{display:none!important}
+.dd-trigger{
+    width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:11px 12px;border:1px solid var(--line);background:#fffdf7;color:var(--text);
+    border-radius:12px;text-align:left;font:inherit;cursor:pointer;
+    transition:border-color .15s,box-shadow .15s
+}
+.dd-trigger.field{padding:10px 11px;font-size:12px;border-radius:12px}
+.dd-trigger:hover{border-color:#cfd3c2}
+.dd-trigger:focus-visible,.dd.open .dd-trigger{outline:0;border-color:var(--green);box-shadow:0 0 0 2px #244f3b1f}
+.dd-trigger:disabled{opacity:.6;cursor:not-allowed}
+.dd-row{display:flex;align-items:center;gap:9px;min-width:0}
+.dd-ico{width:20px;text-align:center;font-size:15px;line-height:1;flex-shrink:0;color:var(--green)}
+.dd-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-chevron{flex-shrink:0;color:var(--text);transition:transform .15s}
+.dd.open .dd-chevron{transform:rotate(180deg)}
+.dd-list{
+    position:fixed;z-index:1000;overflow-y:auto;padding:4px;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 12px 32px #1b322c33;font-size:13px
+}
+.dd-list[hidden]{display:none}
+.dd-item{padding:8px 10px;border-radius:8px;color:var(--text);cursor:pointer}
+.dd-item.active{background:var(--mint)}
+.dd-item.selected,.dd-item.selected.active{background:var(--green);color:#fff}
+.dd-item.selected .dd-ico{color:#fff}
+.dd-item .dd-text{white-space:nowrap}
+
+/* Edição do valor guardado da meta (adicionar / substituir) */
+.goal-saved-block .opt-grid{margin-bottom:14px}
+.goal-saved-block .income-help{margin-bottom:12px}
+.goal-saved-block .income-hint{margin:2px 0 0}
+
+/* Popup de confirmação neutro (pergunta com Sim / Não) */
+.confirm-back.neutral .confirm-icon{background:var(--mint);color:var(--green)}
+.confirm-back.neutral .confirm-icon svg{display:none}
+.confirm-back.neutral .confirm-icon::before{content:"?";font-size:26px;font-weight:700}
+.confirm-back.neutral .btn-danger-solid{background:var(--green);border-color:var(--green)}
+.confirm-back.neutral .modal-confirm .btn{min-width:150px}
+
+/* Popup de edição do nome da conta */
+.modal.modal-profile{width:min(420px,100%)}
+.modal-profile .modal-icon{color:var(--green)}
+
+/* Meta de gasto (barra lateral) */
+.goal-mini{cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.goal-mini:hover,.goal-mini:focus-visible{outline:0;border-color:var(--green2);box-shadow:0 0 0 2px #244f3b1f}
+.goal-mini-head{display:flex;justify-content:space-between;align-items:center}
+.goal-mini-head em{font-style:normal;font-size:10px;color:var(--green2);opacity:0;transition:opacity .15s}
+.goal-mini:hover .goal-mini-head em,.goal-mini:focus-visible .goal-mini-head em{opacity:1}
+.goal-mini #mini-period{margin-top:4px}
+.progress span.warn{background:#c89b3c}
+.progress span.over{background:var(--red)}
+.progress span{transition:width .3s ease}
+.form-grid .full-col{grid-column:1/-1;margin:0}
+
+/* Campo de parcelas */
+.field-hint{color:var(--muted);font-size:11px}
+.form-group[hidden]{display:none}

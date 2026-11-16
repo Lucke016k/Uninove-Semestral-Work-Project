@@ -99,13 +99,14 @@ exigirLoginPagina("PaginaLogin/login.php");
                     </button>
                 </nav>
             </div>
-            <div class="goal-mini">
-                <span>◎ Meta do mês</span>
-                <strong id="mini-goal">R$ 3.500,00</strong>
+            <div class="goal-mini" id="goalMini" role="button" tabindex="0" title="Editar meta de gasto" onclick="openSpendGoal()">
+                <span class="goal-mini-head">◎ Meta de gasto <em>Editar</em></span>
+                <strong id="mini-goal">R$ 0,00</strong>
                 <div class="progress">
-                    <span id="mini-progress" style="width:60%"></span>
+                    <span id="mini-progress" style="width:0%"></span>
                 </div>
-                <small id="mini-note">R$ 1.120,00 restantes</small>
+                <small id="mini-note"></small>
+                <small id="mini-period"></small>
             </div>
         </aside>
 
@@ -150,7 +151,7 @@ exigirLoginPagina("PaginaLogin/login.php");
                     </div>
                     <div class="form-group">
                         <label>Categoria</label>
-                        <select name="category" id="expenseCategory"></select>
+                        <select name="category" id="expenseCategory" data-dd-icon="🏷️"></select>
                     </div>
                     <div class="form-group">
                         <label>Forma de pagamento</label>
@@ -174,6 +175,11 @@ exigirLoginPagina("PaginaLogin/login.php");
                             <option value="Não">Não</option>
                             <option value="Sim">Sim</option>
                         </select>
+                    </div>
+                    <div class="form-group" id="installmentCountGroup" hidden>
+                        <label>Quantidade de parcelas</label>
+                        <input name="installment_count" type="number" min="2" max="48" step="1" placeholder="Ex.: 12" disabled>
+                        <small class="field-hint" id="installmentHint"></small>
                     </div>
                 </div>
                 <div class="modal-actions">
@@ -211,11 +217,16 @@ exigirLoginPagina("PaginaLogin/login.php");
                     <div class="form-group">
                         <label>Ícone</label>
                         <select name="icon">
-                            <option>✈</option>
-                            <option>⌂</option>
-                            <option>🚗</option>
-                            <option>▤</option>
-                            <option>◎</option>
+                            <option value="✈️" data-icon="✈️">Viagem</option>
+                            <option value="🏠" data-icon="🏠">Casa</option>
+                            <option value="🚗" data-icon="🚗">Carro</option>
+                            <option value="🎓" data-icon="🎓">Estudos</option>
+                            <option value="💍" data-icon="💍">Casamento</option>
+                            <option value="📱" data-icon="📱">Eletrônicos</option>
+                            <option value="🏖️" data-icon="🏖️">Férias</option>
+                            <option value="💰" data-icon="💰">Reserva</option>
+                            <option value="🎁" data-icon="🎁">Presente</option>
+                            <option value="🎯" data-icon="🎯">Outro objetivo</option>
                         </select>
                     </div>
                 </div>
@@ -231,7 +242,7 @@ exigirLoginPagina("PaginaLogin/login.php");
         <div class="modal modal-edit" role="dialog" aria-modal="true" aria-labelledby="goalEditTitle">
             <div class="modal-head">
                 <div class="modal-title">
-                    <span class="modal-icon" id="goalEditIcon">◎</span>
+                    <span class="modal-icon" id="goalEditIcon">🎯</span>
                     <div>
                         <h2 id="goalEditTitle">Editar meta</h2>
                         <small id="goalEditSubtitle">Atualize o valor guardado</small>
@@ -254,9 +265,31 @@ exigirLoginPagina("PaginaLogin/login.php");
                         <label>Valor desejado (R$)</label>
                         <input name="target" type="number" min="1" step="0.01" required>
                     </div>
-                    <div class="form-group">
-                        <label>Já guardado (R$)</label>
-                        <input name="saved" type="number" min="0" step="0.01" required>
+                    <div class="form-group full goal-saved-block">
+                        <h3 class="income-section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M12 7v10M7 12h10" stroke="#fffdf7" stroke-width="2.2" stroke-linecap="round"/></svg>Atualizar valor guardado</h3>
+                        <p class="income-help">Guardado atual: <strong id="goalEditCurrent">R$ 0,00</strong>. Some um valor ao atual ou substitua pelo novo valor.</p>
+                        <div class="opt-grid">
+                            <label class="opt-card">
+                                <input type="radio" name="modo" value="adicionar" checked>
+                                <span class="opt-box">
+                                    <span class="opt-radio"></span>
+                                    <span class="opt-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M3 11h18"/><path d="M12 14v4"/><path d="M10 16h4"/></svg></span>
+                                    <span class="opt-text"><strong>Adicionar</strong><small>Soma ao valor atual</small></span>
+                                </span>
+                            </label>
+                            <label class="opt-card">
+                                <input type="radio" name="modo" value="substituir">
+                                <span class="opt-box">
+                                    <span class="opt-radio"></span>
+                                    <span class="opt-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 0-15.5-6.2L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 15.5 6.2L21 16"/><path d="M21 21v-5h-5"/></svg></span>
+                                    <span class="opt-text"><strong>Substituir</strong><small>Troca o valor atual</small></span>
+                                </span>
+                            </label>
+                        </div>
+                        <label>Valor (R$)</label>
+                        <input name="valor" type="number" min="0" step="0.01" placeholder="Ex.: 500,00">
+                        <p class="income-hint" id="goalEditHint"></p>
+                        <input type="hidden" name="saved" value="0">
                     </div>
                     <div class="form-group">
                         <label>Prazo</label>
@@ -265,17 +298,89 @@ exigirLoginPagina("PaginaLogin/login.php");
                     <div class="form-group">
                         <label>Ícone</label>
                         <select name="icon">
-                            <option>✈</option>
-                            <option>⌂</option>
-                            <option>🚗</option>
-                            <option>▤</option>
-                            <option>◎</option>
+                            <option value="✈️" data-icon="✈️">Viagem</option>
+                            <option value="🏠" data-icon="🏠">Casa</option>
+                            <option value="🚗" data-icon="🚗">Carro</option>
+                            <option value="🎓" data-icon="🎓">Estudos</option>
+                            <option value="💍" data-icon="💍">Casamento</option>
+                            <option value="📱" data-icon="📱">Eletrônicos</option>
+                            <option value="🏖️" data-icon="🏖️">Férias</option>
+                            <option value="💰" data-icon="💰">Reserva</option>
+                            <option value="🎁" data-icon="🎁">Presente</option>
+                            <option value="🎯" data-icon="🎯">Outro objetivo</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn" id="cancelGoalEdit">Cancelar</button>
                     <button class="btn primary" type="submit">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Modal da meta de gasto (valor limite + período de até 30 dias). -->
+    <div class="modal-back" id="spendGoalModalBack">
+        <div class="modal modal-edit modal-profile" role="dialog" aria-modal="true" aria-labelledby="spendGoalTitle">
+            <div class="modal-head">
+                <div class="modal-title">
+                    <span class="modal-icon" aria-hidden="true">◎</span>
+                    <div>
+                        <h2 id="spendGoalTitle">Meta de gasto</h2>
+                        <small>Defina o limite e o período</small>
+                    </div>
+                </div>
+                <button type="button" class="close" id="closeSpendGoal" aria-label="Fechar">×</button>
+            </div>
+            <form id="spendGoalForm">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Limite de gastos (R$)</label>
+                        <input name="limit" type="number" min="1" step="0.01" required placeholder="Ex.: 3500,00">
+                    </div>
+                    <div class="form-group">
+                        <label>Início da meta</label>
+                        <input name="start" type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Duração (dias, máx. 30)</label>
+                        <input name="days" type="number" min="1" max="30" step="1" required>
+                    </div>
+                    <p class="income-hint full-col" id="spendGoalHint"></p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="cancelSpendGoal">Cancelar</button>
+                    <button class="btn primary" type="submit">Salvar meta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Modal para editar o nome da conta. -->
+    <div class="modal-back" id="profileModalBack">
+        <div class="modal modal-edit modal-profile" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+            <div class="modal-head">
+                <div class="modal-title">
+                    <span class="modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+                    <div>
+                        <h2 id="profileModalTitle">Editar nome da conta</h2>
+                        <small>Como você aparece no sistema</small>
+                    </div>
+                </div>
+                <button type="button" class="close" id="closeProfile" aria-label="Fechar">×</button>
+            </div>
+            <form id="profileForm">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Nome</label>
+                        <input name="name" required maxlength="120" placeholder="Seu nome" autocomplete="name">
+                    </div>
+                    <div class="form-group full">
+                        <label>E-mail</label>
+                        <input name="email" type="email" disabled>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="cancelProfile">Cancelar</button>
+                    <button class="btn primary" type="submit" id="saveProfile">Salvar nome</button>
                 </div>
             </form>
         </div>
@@ -429,6 +534,7 @@ exigirLoginPagina("PaginaLogin/login.php");
     ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>
     <script src="sessao.js"></script>
+    <script src="dropdown.js"></script>
     <script src="script.js"></script>
     
 </body>

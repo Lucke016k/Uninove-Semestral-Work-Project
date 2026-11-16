@@ -19,10 +19,10 @@ const PAYMENT_METHODS = ['Crédito', 'Débito', 'Pix', 'Dinheiro', 'VR', 'VA', '
 
 // Metas de exemplo. Na versão conectada, virão da tabela meta.
 const defaultGoals = [
-    { id: 1, name: 'Viagem dos Sonhos', icon: '✈',  target: 5000,  saved: 3000,  due: '2027-01-10' },
-    { id: 2, name: 'Entrada do Apê',    icon: '⌂',  target: 35000, saved: 12250, due: '2028-06-30' },
+    { id: 1, name: 'Viagem dos Sonhos', icon: '✈️', target: 5000,  saved: 3000,  due: '2027-01-10' },
+    { id: 2, name: 'Entrada do Apê',    icon: '🏠', target: 35000, saved: 12250, due: '2028-06-30' },
     { id: 3, name: 'Carro Novo',        icon: '🚗', target: 12000, saved: 2400,  due: '2027-10-10' },
-    { id: 4, name: 'Pós-Graduação',     icon: '▤',  target: 20000, saved: 2000,  due: '2028-08-01' }
+    { id: 4, name: 'Pós-Graduação',     icon: '🎓', target: 20000, saved: 2000,  due: '2028-08-01' }
 ];
 
 // ==========================================
@@ -98,6 +98,71 @@ function total(arr) {
     return arr.reduce((soma, e) => soma + Number(e.value || 0), 0);
 }
 
+// ==========================================
+// META DE GASTO (barra lateral e painel inicial)
+// ==========================================
+
+const SPEND_GOAL_MAX_DAYS = 30;
+
+// Datas em AAAA-MM-DD usando o fuso do navegador (sem desvio de UTC).
+function localISO(d) {
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function parseISO(s) {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+function addDaysISO(s, n) {
+    const d = parseISO(s);
+    d.setDate(d.getDate() + n);
+    return localISO(d);
+}
+
+// Meta salva no navegador: { limit, start, days }. Padrão: dia 1 do mês atual, 30 dias.
+let spendGoal = (function () {
+    const hoje = new Date();
+    const padrao = {
+        limit: MONTHLY_LIMIT,
+        start: localISO(new Date(hoje.getFullYear(), hoje.getMonth(), 1)),
+        days: SPEND_GOAL_MAX_DAYS
+    };
+    const g = load('cf_spend_goal', padrao);
+    const valida = g && Number(g.limit) > 0 && /^\d{4}-\d{2}-\d{2}$/.test(g.start || '')
+        && Number.isInteger(Number(g.days)) && g.days >= 1 && g.days <= SPEND_GOAL_MAX_DAYS;
+    return valida ? { limit: Number(g.limit), start: g.start, days: Number(g.days) } : padrao;
+})();
+
+// Soma os lançamentos dentro do período da meta e calcula o andamento.
+function spendGoalInfo() {
+    const fim = addDaysISO(spendGoal.start, spendGoal.days - 1);
+    const hoje = localISO(new Date());
+    const gasto = total(expenses.filter(e => {
+        const d = String(e.date).slice(0, 10);
+        return d >= spendGoal.start && d <= fim;
+    }));
+    const status = hoje < spendGoal.start ? 'futura' : hoje > fim ? 'encerrada' : 'ativa';
+    const diasRestantes = status === 'ativa'
+        ? Math.round((parseISO(fim) - parseISO(hoje)) / 86400000) + 1
+        : 0;
+    const pct = spendGoal.limit > 0 ? gasto / spendGoal.limit * 100 : 0;
+
+    return { fim, gasto, status, diasRestantes, pct, restante: spendGoal.limit - gasto };
+}
+
+function spendGoalPeriodText(info) {
+    const curto = s => s.split('-').reverse().slice(0, 2).join('/');
+    const periodo = curto(spendGoal.start) + ' – ' + curto(info.fim);
+
+    if (info.status === 'futura') return 'Começa em ' + curto(spendGoal.start);
+    if (info.status === 'encerrada') return 'Período encerrado em ' + curto(info.fim);
+    return periodo + ' · ' + info.diasRestantes + (info.diasRestantes === 1 ? ' dia restante' : ' dias restantes');
+}
+
+function spendGoalBarClass(pct) {
+    return pct > 100 ? 'over' : pct >= 80 ? 'warn' : '';
+}
+
 // Nomes das categorias cadastradas no banco.
 function catNames() {
     return categories.map(c => c.name);
@@ -121,7 +186,7 @@ let editingCategoryId = null; // ID da categoria aberta no popup (null = nova)
  * Mostra o popup de confirmação e devolve uma Promise<boolean>.
  * Com info:true mostra apenas o botão de OK (aviso), sempre devolvendo true.
  */
-function confirmDialog({ title = 'Excluir item?', message = '', confirmLabel = 'Excluir', cancelLabel = 'Cancelar', info = false } = {}) {
+function confirmDialog({ title = 'Excluir item?', message = '', confirmLabel = 'Excluir', cancelLabel = 'Cancelar', info = false, neutral = false } = {}) {
     return new Promise(resolve => {
         const back = $('confirmModalBack');
         const ok = $('confirmOk');
@@ -133,6 +198,7 @@ function confirmDialog({ title = 'Excluir item?', message = '', confirmLabel = '
         cancel.textContent = cancelLabel;
         cancel.hidden = info;
         back.classList.toggle('info', info);
+        back.classList.toggle('neutral', neutral);
 
         const finalizar = (resposta) => {
             back.classList.remove('show');
@@ -299,6 +365,12 @@ function stat(label, value, note, ico) {
 // Ícones SVG usados nos botões de ação.
 const ICON_EDIT = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 const ICON_TRASH = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+
+// Ícones antigos de metas (já salvos no banco) convertidos para os novos.
+const LEGACY_GOAL_ICONS = { '✈': '✈️', '⌂': '🏠', '▤': '🎓', '◎': '🎯' };
+function goalIcon(i) {
+    return LEGACY_GOAL_ICONS[i] || i || '🎯';
+}
 
 // Ícone visual de cada categoria (apenas decorativo).
 function iconFor(c) {
@@ -496,7 +568,7 @@ function homePage() {
     const sum = total(expenses);
     const monthSum = total(expenses.filter(e => e.date.slice(0, 7) === todayISO().slice(0, 7)));
     const recentes = expenses.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
-    const restante = MONTHLY_LIMIT - monthSum;
+    const meta = spendGoalInfo();
 
     return `
     ${head(
@@ -524,15 +596,17 @@ function homePage() {
                 ${categoryBars()}
             </div>
             <div class="card">
-                <h3 class="section-title">Meta mensal</h3>
+                <h3 class="section-title">Meta de gasto</h3>
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <span class="muted" style="font-size:11px">Limite de gastos</span>
-                    <strong style="color:var(--green)">${money(MONTHLY_LIMIT)}</strong>
+                    <strong style="color:var(--green)">${money(spendGoal.limit)}</strong>
                 </div>
                 <div class="progress" style="margin:12px 0">
-                    <span style="width:${Math.min(100, monthSum / MONTHLY_LIMIT * 100)}%"></span>
+                    <span class="${spendGoalBarClass(meta.pct)}" style="width:${Math.min(100, meta.pct)}%"></span>
                 </div>
-                <small class="muted">${restante > 0 ? money(restante) + ' disponíveis' : money(-restante) + ' acima do limite'}</small>
+                <small class="muted">${money(meta.gasto)} gastos · ${meta.restante >= 0 ? money(meta.restante) + ' disponíveis' : money(-meta.restante) + ' acima do limite'}</small>
+                <small class="muted" style="display:block;margin-top:4px">${spendGoalPeriodText(meta)}</small>
+                <button class="btn" style="margin-top:12px" onclick="openSpendGoal()">Editar meta</button>
             </div>
         </div>
     </div>`;
@@ -581,11 +655,11 @@ function expensesPage() {
     </div>
     <div class="toolbar">
         <input class="field search" id="searchExpense" placeholder="⌕ Pesquisar por nome, gasto, categoria..." value="${esc(searchTerm)}">
-        <select class="field" id="categoryFilter">
+        <select class="field" id="categoryFilter" data-dd-icon="🏷️">
             <option value="">Todas as categorias</option>
             ${catNames().map(c => `<option${catSelecionada === c ? ' selected' : ''}>${esc(c)}</option>`).join('')}
         </select>
-        <select class="field" id="monthFilter">
+        <select class="field" id="monthFilter" data-dd-icon="📅">
             <option value="">Todos os períodos</option>
             ${periodos.map(m => `<option value="${m}">${m.split('-').reverse().join('/')}</option>`).join('')}
         </select>
@@ -806,7 +880,7 @@ function goalsPage() {
 
             return `
             <div class="goal-line">
-                <div class="bigicon">${esc(g.icon || '◎')}</div>
+                <div class="bigicon">${esc(goalIcon(g.icon))}</div>
                 <div>
                     <strong>${esc(g.name)}</strong>
                     <small>${money(g.saved)} guardados de ${money(g.target)}</small>
@@ -918,13 +992,92 @@ function render() {
 
 // Atualiza a barra lateral com o gasto do mês e o limite mensal.
 function updateMini() {
-    const spent = total(expenses.filter(e => e.date.startsWith(todayISO().slice(0, 7))));
+    const info = spendGoalInfo();
+    const barra = $('mini-progress');
 
-    $('mini-progress').style.width = Math.min(100, spent / MONTHLY_LIMIT * 100) + '%';
-    $('mini-note').textContent = spent < MONTHLY_LIMIT
-        ? money(MONTHLY_LIMIT - spent) + ' restantes'
-        : money(spent - MONTHLY_LIMIT) + ' acima do limite';
+    $('mini-goal').textContent = money(info.gasto) + ' de ' + money(spendGoal.limit);
+    barra.style.width = Math.min(100, info.pct) + '%';
+    barra.className = spendGoalBarClass(info.pct);
+    $('mini-note').textContent = info.restante >= 0
+        ? money(info.restante) + ' restantes'
+        : money(-info.restante) + ' acima do limite';
+    $('mini-period').textContent = spendGoalPeriodText(info);
 }
+
+// ---- Popup para definir limite, início e duração (até 30 dias) ----
+function spendGoalFormHint() {
+    const f = $('spendGoalForm');
+    const dias = Number(f.elements.days.value);
+    const inicio = f.elements.start.value;
+
+    if (!inicio || !Number.isInteger(dias) || dias < 1 || dias > SPEND_GOAL_MAX_DAYS) {
+        $('spendGoalHint').textContent = 'Escolha de 1 a ' + SPEND_GOAL_MAX_DAYS + ' dias de duração.';
+        return;
+    }
+    const fim = addDaysISO(inicio, dias - 1);
+    $('spendGoalHint').textContent = 'A meta vale de ' + prettyDate(inicio) + ' até ' + prettyDate(fim) +
+        ' (' + dias + (dias === 1 ? ' dia' : ' dias') + '). Os lançamentos desse período entram na soma.';
+}
+
+function openSpendGoal() {
+    const f = $('spendGoalForm');
+
+    f.elements.limit.value = spendGoal.limit;
+    f.elements.start.value = spendGoal.start;
+    f.elements.days.value = spendGoal.days;
+    spendGoalFormHint();
+    $('spendGoalModalBack').classList.add('show');
+    f.elements.limit.focus();
+}
+
+function closeSpendGoal() {
+    $('spendGoalModalBack').classList.remove('show');
+}
+
+$('closeSpendGoal').onclick = $('cancelSpendGoal').onclick = closeSpendGoal;
+$('spendGoalModalBack').addEventListener('click', (e) => {
+    if (e.target.id === 'spendGoalModalBack') closeSpendGoal();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSpendGoal();
+});
+$('spendGoalForm').addEventListener('input', spendGoalFormHint);
+
+$('spendGoalForm').onsubmit = (e) => {
+    e.preventDefault();
+
+    const f = e.currentTarget;
+    const limite = Number(f.elements.limit.value);
+    const dias = Number(f.elements.days.value);
+
+    if (!(limite > 0)) {
+        toast('Informe um limite de gastos maior que zero.');
+        return;
+    }
+    if (!f.elements.start.value) {
+        toast('Informe a data de início.');
+        return;
+    }
+    if (!Number.isInteger(dias) || dias < 1 || dias > SPEND_GOAL_MAX_DAYS) {
+        toast('A duração deve ser de 1 a ' + SPEND_GOAL_MAX_DAYS + ' dias.');
+        return;
+    }
+
+    spendGoal = { limit: limite, start: f.elements.start.value, days: dias };
+    localStorage.setItem('cf_spend_goal', JSON.stringify(spendGoal));
+
+    closeSpendGoal();
+    updateMini();
+    render();
+    toast('Meta de gasto atualizada.');
+};
+
+$('goalMini').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openSpendGoal();
+    }
+});
 
 // ==========================================
 // LANÇAMENTOS (criar, editar, excluir)
@@ -934,10 +1087,18 @@ function updateMini() {
 function openExpense(id = null) {
     // Sem categorias no banco não há como lançar um gasto: leva o usuário a cadastrar a primeira.
     if (!categories.length) {
-        if (confirm('Você ainda não tem categorias cadastradas. Deseja cadastrar uma agora?')) {
-            setPage('categories');
-            addCategory();
-        }
+        confirmDialog({
+            title: 'Nenhuma categoria cadastrada',
+            message: 'Para registrar um lançamento você precisa ter pelo menos uma categoria. Deseja criar uma agora?',
+            confirmLabel: 'Sim, criar agora',
+            cancelLabel: 'Não, criar mais tarde',
+            neutral: true
+        }).then(criar => {
+            if (criar) {
+                setPage('categories');
+                addCategory();
+            }
+        });
         return;
     }
 
@@ -965,6 +1126,7 @@ function openExpense(id = null) {
         }
     }
 
+    updateInstallmentField();
     $('modalBack').classList.add('show');
 }
 
@@ -977,10 +1139,55 @@ function editExpense(id) {
 $('closeModal').onclick = $('cancelModal').onclick = () => $('modalBack').classList.remove('show');
 
 // Cadastra ou edita o lançamento enviando o formulário ao PHP.
+// Mostra o campo "Quantidade de parcelas" só quando "Parcelado?" = Sim.
+function updateInstallmentField() {
+    const f = $('expenseForm');
+    const parcelado = f.elements.installments.value === 'Sim';
+    const campo = f.elements.installment_count;
+
+    $('installmentCountGroup').hidden = !parcelado;
+    campo.disabled = !parcelado;
+    campo.required = parcelado;
+
+    if (!parcelado) {
+        campo.value = '';
+        $('installmentHint').textContent = '';
+        return;
+    }
+
+    const n = Number(campo.value);
+    const valor = Number(f.elements.value.value);
+    $('installmentHint').textContent = (n >= 2 && valor > 0)
+        ? n + 'x de ' + money(valor / n)
+        : 'Informe de 2 a 48 parcelas.';
+}
+
+$('expenseForm').addEventListener('change', e => {
+    if (e.target.name === 'installments') {
+        updateInstallmentField();
+        if (e.target.value === 'Sim') $('expenseForm').elements.installment_count.focus();
+    }
+});
+$('expenseForm').addEventListener('input', e => {
+    if (['installment_count', 'value'].includes(e.target.name)) updateInstallmentField();
+});
+$('expenseForm').addEventListener('reset', () => setTimeout(updateInstallmentField, 0));
+
 $('expenseForm').onsubmit = async e => {
     e.preventDefault();
 
     const form = e.currentTarget;
+
+    if (form.elements.installments.value === 'Sim') {
+        const n = Number(form.elements.installment_count.value);
+
+        if (!Number.isInteger(n) || n < 2 || n > 48) {
+            toast('Informe a quantidade de parcelas (de 2 a 48).');
+            form.elements.installment_count.focus();
+            return;
+        }
+    }
+
     const dados = new FormData(form);
     const editando = editingId !== null;
     const url = editando ? 'api/lancamentos/editar.php' : 'api/lancamentos/criar.php';
@@ -1294,6 +1501,40 @@ document.getElementById('goalForm').onsubmit = async (e) => {
 // ATUALIZAR PROGRESSO DA META
 // ==========================================
 
+// Calcula o novo valor guardado conforme o modo (adicionar ou substituir).
+function goalEditNewSaved() {
+    const f = $('goalEditForm');
+    const meta = goals.find(g => String(g.id) === String(f.elements.id.value));
+    const atual = meta ? Number(meta.saved) : 0;
+    const texto = f.elements.valor.value;
+    const valor = texto === '' ? null : Number(texto);
+
+    if (f.elements.modo.value === 'adicionar') {
+        return atual + (valor || 0);
+    }
+    return valor === null ? atual : valor;
+}
+
+// Atualiza barra, percentual e dica enquanto o usuário digita.
+function updateGoalEditPreview() {
+    const f = $('goalEditForm');
+    const novo = goalEditNewSaved();
+    const alvo = Number(f.elements.target.value) || 0;
+    const p = alvo > 0 ? Math.max(0, Math.min(100, novo / alvo * 100)) : 0;
+
+    $('goalEditBar').style.width = p + '%';
+    $('goalEditPercent').textContent = Math.round(p) + '% concluído';
+    $('goalEditHint').textContent = (f.elements.modo.value === 'adicionar'
+        ? 'O valor será somado ao guardado atual. '
+        : 'O valor trocará todo o guardado atual. ') + 'Novo total: ' + money(novo) + '.';
+}
+
+['input', 'change'].forEach(ev => {
+    $('goalEditForm').addEventListener(ev, e => {
+        if (['valor', 'modo', 'target'].includes(e.target.name)) updateGoalEditPreview();
+    });
+});
+
 function editGoal(id) {
 
     // Localiza a meta.
@@ -1314,8 +1555,12 @@ function editGoal(id) {
     f.elements.target.value = meta.target;
     f.elements.due.value = meta.due;
     f.elements.saved.value = meta.saved;
+    f.elements.valor.value = '';
+    f.elements.modo.value = 'adicionar';
+    $('goalEditCurrent').textContent = money(meta.saved);
+    updateGoalEditPreview();
 
-    const iconeAtual = meta.icon || '◎';
+    const iconeAtual = goalIcon(meta.icon);
     const selIcon = f.elements.icon;
 
     if (![...selIcon.options].some(o => o.value === iconeAtual)) {
@@ -1323,12 +1568,8 @@ function editGoal(id) {
     }
     selIcon.value = iconeAtual;
 
-    $('goalEditIcon').textContent = meta.icon || '◎';
+    $('goalEditIcon').textContent = iconeAtual;
     $('goalEditSubtitle').textContent = meta.name;
-
-    const p = Math.min(100, meta.saved / meta.target * 100);
-    $('goalEditBar').style.width = p + '%';
-    $('goalEditPercent').textContent = Math.round(p) + '% concluído';
 
     $('goalEditModalBack').classList.add('show');
     f.elements.name.focus();
@@ -1354,6 +1595,16 @@ $('goalEditForm').onsubmit = async (e) => {
     e.preventDefault();
 
     const f = e.currentTarget;
+
+    // Modo "substituir" exige o novo valor.
+    if (f.elements.modo.value === 'substituir' && f.elements.valor.value === '') {
+        toast('Informe o novo valor guardado.');
+        f.elements.valor.focus();
+        return;
+    }
+
+    // O banco recebe sempre o valor final já calculado (somado ou substituído).
+    f.elements.saved.value = goalEditNewSaved().toFixed(2);
 
     // Captura os campos do formulário (id, name, target, saved, due, icon).
     const dados = new FormData(f);
@@ -1525,17 +1776,74 @@ async function loadGoalsFromDatabase() {
 // PERFIL, DADOS E LOGIN
 // ==========================================
 
-// Edita nome/e-mail localmente. Na versão real, virão da sessão e da tabela usuario.
+// Abre o popup para editar o nome da conta.
 function editProfile() {
-    const nome = prompt('Seu nome:', user.name || '');
-    if (nome === null) return;
+    const f = $('profileForm');
 
-    user = { name: nome.trim() || 'Usuário'};
-    $('userLabel').textContent = user.name;
-    save();
-    render();
-    toast('Perfil atualizado.');
+    f.elements.name.value = user.name || '';
+    f.elements.email.value = user.email || '';
+    $('profileModalBack').classList.add('show');
+    f.elements.name.focus();
+    f.elements.name.select();
 }
+
+function closeProfile() {
+    $('profileModalBack').classList.remove('show');
+}
+
+$('closeProfile').onclick = $('cancelProfile').onclick = closeProfile;
+
+$('profileModalBack').addEventListener('click', (e) => {
+    if (e.target.id === 'profileModalBack') closeProfile();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeProfile();
+});
+
+// Salva o novo nome no banco (api/perfil/editar.php) e atualiza a tela.
+$('profileForm').onsubmit = async (e) => {
+    e.preventDefault();
+
+    const f = e.currentTarget;
+    const nome = f.elements.name.value.trim();
+
+    if (!nome) {
+        toast('Informe o seu nome.');
+        f.elements.name.focus();
+        return;
+    }
+
+    if (nome === (user.name || '')) {
+        closeProfile();
+        return;
+    }
+
+    const botao = $('saveProfile');
+    botao.disabled = true;
+
+    try {
+        const resultado = await callApi('api/perfil/editar.php', {
+            name: nome,
+            email: user.email || f.elements.email.value
+        });
+
+        user = {
+            name: resultado.usuario.nome,
+            email: resultado.usuario.email
+        };
+
+        $('userLabel').textContent = user.name;
+        save();
+        closeProfile();
+        render();
+        toast('Nome da conta atualizado.');
+    } catch (erro) {
+        console.error('Erro ao atualizar perfil:', erro);
+        toast(erro.message);
+    } finally {
+        botao.disabled = false;
+    }
+};
 
 // Apaga as metas e o perfil salvos no navegador. Não apaga dados do MySQL.
 function clearData() {

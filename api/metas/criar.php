@@ -30,7 +30,7 @@ $nome = trim($_POST['name'] ?? '');
 $targetTexto = $_POST['target'] ?? '';
 $savedTexto = $_POST['saved'] ?? '0';
 $due = $_POST['due'] ?? '';
-$icone = trim($_POST['icon'] ?? '◎');
+$icone = trim($_POST['icon'] ?? '🎯');
 
 // Valida os valores.
 if (
