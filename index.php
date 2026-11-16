@@ -16,7 +16,21 @@ exigirLoginPagina("PaginaLogin/login.php");
         <!-- Menu lateral: navegação, filtros rápidos de pagamento e resumo mensal. -->
         <aside class="sidebar">
             <div class="brand">
-                <div class="brand-icon">▣</div>
+                <div class="brand-icon">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="22" height="22"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="2"
+         stroke-linecap="round"
+         stroke-linejoin="round">
+        <rect x="3" y="5" width="18" height="15" rx="3"/>
+        <path d="M3 9h18"/>
+        <path d="M16 14h2"/>
+        <path d="M7 5V4a2 2 0 0 1 2-2h8"/>
+    </svg>
+</div>
                 <div>
                     <strong>UniFinance</strong>
                     <small>Seus gastos, seus objetivos</small>

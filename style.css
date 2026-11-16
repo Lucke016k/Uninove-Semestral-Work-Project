@@ -1276,3 +1276,20 @@
         height:54px
     }
 }
+/* Alinha título e valor à esquerda nas linhas do card "Minha conta" */
+.profile .setting-row > div {
+    text-align: left;
+    min-width: 0;
+}
+
+.profile .setting-row strong,
+.profile .setting-row small {
+    display: block;
+    text-align: left;
+}
+
+/* E-mails e nomes longos quebram a linha em vez de estourar o card */
+.profile .setting-row small {
+    overflow-wrap: anywhere;
+    margin-top: 4px;
+}
