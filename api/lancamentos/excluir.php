@@ -1,7 +1,8 @@
 <?php
 
-// Inicia a sessão.
-session_start();
+require_once __DIR__ . "/../../config/auth.php";
+exigirLoginApi();
+
 
 // Define o formato da resposta.
 header('Content-Type: application/json; charset=utf-8');

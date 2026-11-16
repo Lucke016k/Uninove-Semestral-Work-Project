@@ -1,8 +1,6 @@
 <?php
-
-// 1. Inicialização e conexão
-session_start();
-
+require_once __DIR__ . "/../../config/auth.php";
+exigirLoginApi();
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../../config/conexao.php';

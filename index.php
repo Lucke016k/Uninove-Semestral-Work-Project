@@ -1,23 +1,12 @@
 <?php
-/**
- * Página principal do Controle Financeiro.
- * A extensão .php permite acrescentar processamento no servidor.
- * Neste estágio, o arquivo ainda entrega a interface; a conexão PDO
- * ficará em config/conexao.php e será usada por endpoints PHP separados.
- */
+require_once __DIR__ . "/config/auth.php";
+exigirLoginPagina("PaginaLogin/login.php");
 ?>
-<?php
-session_start();
 
-if (!isset($_SESSION["usuario"])) {
-    header("Location: PaginaLogin/login.php");
-    exit;
-}
-?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Controle Financeiro</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UniFinance</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -29,7 +18,7 @@ if (!isset($_SESSION["usuario"])) {
             <div class="brand">
                 <div class="brand-icon">▣</div>
                 <div>
-                    <strong>Controle Financeiro</strong>
+                    <strong>UniFinance</strong>
                     <small>Seus gastos, seus objetivos</small>
                 </div>
             </div>
@@ -400,7 +389,7 @@ if (!isset($_SESSION["usuario"])) {
     <div class="login-page" id="loginPage">
         <div class="login-box">
             <div class="login-logo">▣</div>
-            <h2>Controle Financeiro</h2>
+            <h2>UniFinance</h2>
             <p>Seus gastos, seus objetivos.</p>
             <form id="loginForm">
                 <div class="form-group">
@@ -425,7 +414,7 @@ if (!isset($_SESSION["usuario"])) {
         "email" => $_SESSION["usuario"]["email"] ?? ""
     ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>
-
+    <script src="sessao.js"></script>
     <script src="script.js"></script>
     
 </body>

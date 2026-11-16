@@ -60,6 +60,8 @@ try {
         'nome' => $usuario['NOME'],
         'email' => $usuario['EMAIL']
     ];
+    
+    $_SESSION["ultima_atividade"] = time();
 
     header('Location: ../index.php');
     exit;

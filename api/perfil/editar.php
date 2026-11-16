@@ -1,5 +1,7 @@
 <?php
-session_start();
+require_once __DIR__ . "/../../config/auth.php";
+exigirLoginApi();
+
 header('Content-Type: application/json; charset=utf-8');
 
 function responder(int $status, array $dados): void

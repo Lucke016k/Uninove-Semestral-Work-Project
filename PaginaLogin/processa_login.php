@@ -81,6 +81,8 @@ if (!password_verify($senha, $usuario["SENHA_HASH"])) {
         "email" => $usuario["EMAIL"]
     ];
 
+    $_SESSION["ultima_atividade"] = time();
+    
     // Redirecionando para o dashboard
     header("Location: ../index.php");
     exit;
