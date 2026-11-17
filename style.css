@@ -1378,3 +1378,9 @@
 .opt-card input:disabled + .opt-box{opacity:.5;cursor:not-allowed}
 .opt-card input:disabled + .opt-box:hover{border-color:var(--line)}
 #aporteForm .opt-grid{margin:6px 0 12px}
+.tag-nowrap{white-space:nowrap}
+.stat-value.negative{color:#c0392b}
+
+/* Linha de lucros com um terceiro card (saldo estimado na tela de metas) */
+.income-row.with-extra{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:900px){.income-row.with-extra{grid-template-columns:1fr}}

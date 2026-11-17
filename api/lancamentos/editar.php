@@ -99,12 +99,25 @@ if (
     ]);
 }
 
-// Parcelamento será implementado posteriormente.
+// A quantidade de parcelas é só uma informação para o usuário ver:
+// fica guardada como texto na observação ("Parcelado em 12x") e não gera parcelas.
+$observacao = null;
+
 if ($parcelado === 'Sim') {
-    responder(422, [
-        'sucesso' => false,
-        'erro' => 'A edição de parcelas ainda não está disponível.'
-    ]);
+    $qtdParcelas = filter_var(
+        $_POST['installment_count'] ?? null,
+        FILTER_VALIDATE_INT,
+        ['options' => ['min_range' => 2, 'max_range' => 48]]
+    );
+
+    if ($qtdParcelas === false || $qtdParcelas === null) {
+        responder(400, [
+            'sucesso' => false,
+            'erro' => 'Informe a quantidade de parcelas (de 2 a 48).'
+        ]);
+    }
+
+    $observacao = 'Parcelado em ' . $qtdParcelas . 'x';
 }
 
 try {
@@ -213,7 +226,8 @@ try {
             DESCRICAO = :descricao,
             VALOR = :valor,
             DATA_LANCAMENTO = :data,
-            RESPONSAVEL = :responsavel
+            RESPONSAVEL = :responsavel,
+            OBSERVACAO = :observacao
 
         WHERE ID_LANCAMENTO = :id
         AND ID_USUARIO = :usuario
@@ -231,6 +245,7 @@ try {
         ':valor' => $valor,
         ':data' => $data,
         ':responsavel' => $responsavel,
+        ':observacao' => $observacao,
         ':id' => $idLancamento,
         ':usuario' => $idUsuario
     ]);

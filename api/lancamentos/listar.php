@@ -53,7 +53,10 @@ try {
             END AS payment,
 
             l.RESPONSAVEL AS who,
-            'Não' AS installments
+            CASE
+                WHEN l.OBSERVACAO LIKE 'Parcelado em %x' THEN SUBSTRING(l.OBSERVACAO, 14)
+                ELSE 'Não'
+            END AS installments
 
         FROM lancamento l
         

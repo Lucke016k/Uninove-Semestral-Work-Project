@@ -91,12 +91,25 @@ if(
     ]);
 }
 
-// Parcelamento ainda não liberado
-if($parcelado === 'Sim'){
-    responder(422, [
-        'sucesso' => false,
-        'erro' => 'O cadastro de parcelas será implementado posteriormente.'
-    ]);
+// A quantidade de parcelas é só uma informação para o usuário ver:
+// fica guardada como texto na observação ("Parcelado em 12x") e não gera parcelas.
+$observacao = null;
+
+if ($parcelado === 'Sim') {
+    $qtdParcelas = filter_var(
+        $_POST['installment_count'] ?? null,
+        FILTER_VALIDATE_INT,
+        ['options' => ['min_range' => 2, 'max_range' => 48]]
+    );
+
+    if ($qtdParcelas === false || $qtdParcelas === null) {
+        responder(400, [
+            'sucesso' => false,
+            'erro' => 'Informe a quantidade de parcelas (de 2 a 48).'
+        ]);
+    }
+
+    $observacao = 'Parcelado em ' . $qtdParcelas . 'x';
 }
 
 // Localiza a categoria selecionada no banco.
@@ -181,7 +194,8 @@ try{
             VALOR,
             DATA_LANCAMENTO,
             TIPO,
-            RESPONSAVEL
+            RESPONSAVEL,
+            OBSERVACAO
         )
         VALUES(
             :usuario,
@@ -191,7 +205,8 @@ try{
             :valor,
             :data,
             'DESPESA',
-            :responsavel
+            :responsavel,
+            :observacao
         )
     ";
 
@@ -207,6 +222,7 @@ try{
         ':valor' => $valor,
         ':data' => $data,
         ':responsavel' => $responsavel,
+        ':observacao' => $observacao,
     ]);
 
     // Recupera o ID gerado pelo AUTO_INCREMENT.
