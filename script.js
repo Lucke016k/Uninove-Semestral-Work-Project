@@ -32,6 +32,7 @@ const defaultGoals = [
 let expenses = [];   // Vem de api/lancamentos/listar.php
 let categories = []; // Vem de api/categorias/listar.php: { id, name, global }
 let goals = [];
+let aportes = [];    // Vem de api/metas/aportes.php: { id, goalId, goalName, goalIcon, value, source, date }
 let income = { fixo: 0, variavel: 0 }; // Vem de api/receitas/resumo.php (mês atual)
 let user = {
     name: (window.USUARIO && window.USUARIO.nome) || 'Usuário',
@@ -84,7 +85,7 @@ function esc(s) {
 
 // Data atual no formato AAAA-MM-DD, adequado para input type=date.
 function todayISO() {
-    return new Date().toISOString().slice(0, 10);
+    return localISO(new Date());
 }
 
 // Converte AAAA-MM-DD para o formato brasileiro de exibição.
@@ -164,6 +165,215 @@ function spendGoalBarClass(pct) {
 }
 
 // Nomes das categorias cadastradas no banco.
+// ==========================================
+// FILTRO DE PERÍODO (vale para lançamentos, categorias, relatórios e painel)
+// ==========================================
+
+const PERIOD_PRESETS = {
+    month: 'Este mês',
+    lastmonth: 'Mês passado',
+    last30: 'Últimos 30 dias',
+    year: 'Este ano',
+    all: 'Todo o período'
+};
+
+// Período salvo no navegador: { preset } ou { preset: 'custom', start, end }.
+let period = (function () {
+    const p = load('cf_period', { preset: 'month' });
+    const data = /^\d{4}-\d{2}-\d{2}$/;
+    const valido = p && (PERIOD_PRESETS[p.preset] ||
+        (p.preset === 'custom' && data.test(p.start || '') && data.test(p.end || '') && p.start <= p.end));
+
+    return valido ? p : { preset: 'month' };
+})();
+
+// Datas inicial e final (AAAA-MM-DD) de cada atalho. "Todo o período" não tem limites.
+function presetRange(id) {
+    const hoje = new Date();
+    const y = hoje.getFullYear();
+    const m = hoje.getMonth();
+    const faixa = {
+        month: [new Date(y, m, 1), new Date(y, m + 1, 0)],
+        lastmonth: [new Date(y, m - 1, 1), new Date(y, m, 0)],
+        last30: [new Date(y, m, hoje.getDate() - 29), hoje],
+        year: [new Date(y, 0, 1), new Date(y, 11, 31)]
+    }[id];
+
+    return faixa ? { start: localISO(faixa[0]), end: localISO(faixa[1]) } : { start: null, end: null };
+}
+
+function periodRange() {
+    return period.preset === 'custom'
+        ? { start: period.start, end: period.end }
+        : presetRange(period.preset);
+}
+
+function inPeriod(data) {
+    const d = String(data).slice(0, 10);
+    const r = periodRange();
+
+    return (!r.start || d >= r.start) && (!r.end || d <= r.end);
+}
+
+function periodExpenses() {
+    return expenses.filter(e => inPeriod(e.date));
+}
+
+function periodAportes() {
+    return aportes.filter(a => inPeriod(a.date));
+}
+
+// Botão "Exibindo gastos do período: ..." que abre o seletor de período.
+function periodBar() {
+    const r = periodRange();
+    const texto = r.start
+        ? 'Exibindo gastos do período: <strong>' + prettyDate(r.start) + ' – ' + prettyDate(r.end) + '</strong>'
+        : 'Exibindo gastos de <strong>todo o período</strong>';
+
+    return `
+    <button type="button" class="period-btn" onclick="openPeriod()" title="Alterar o período exibido">
+        <span class="period-ico" aria-hidden="true">📅</span>
+        <span class="period-text">${texto}</span>
+        <span class="period-change">Alterar</span>
+    </button>`;
+}
+
+// Divide o período em até n faixas de datas iguais (usado nos gráficos).
+function periodBuckets(n) {
+    const r = periodRange();
+    const datas = expenses.map(e => String(e.date).slice(0, 10)).sort();
+    let ini = r.start || datas[0] || todayISO();
+    let fim = r.end || datas[datas.length - 1] || todayISO();
+
+    if (ini > fim) [ini, fim] = [fim, ini];
+
+    const dias = Math.round((parseISO(fim) - parseISO(ini)) / 86400000) + 1;
+    const qtd = Math.max(1, Math.min(n, dias));
+
+    return Array.from({ length: qtd }, (_, i) => {
+        const de = addDaysISO(ini, Math.floor(i * dias / qtd));
+        const ate = addDaysISO(ini, Math.floor((i + 1) * dias / qtd) - 1);
+
+        return { de, ate, label: de.slice(8) + '/' + de.slice(5, 7) };
+    });
+}
+
+// Rascunho do popup: só vira o período ativo ao clicar em "Aplicar".
+let periodDraft = null;
+
+function renderPeriodForm() {
+    const { preset, start, end } = periodDraft;
+
+    document.querySelectorAll('#periodPresets [data-preset]').forEach(b => {
+        b.classList.toggle('active', b.dataset.preset === preset);
+    });
+
+    $('periodHint').textContent = preset === 'all'
+        ? 'Todos os lançamentos serão exibidos, sem limite de datas.'
+        : (start && end && start <= end
+            ? 'Serão exibidos os lançamentos de ' + prettyDate(start) + ' até ' + prettyDate(end) + '.'
+            : 'Escolha a data inicial e a data final.');
+}
+
+function openPeriod() {
+    const r = periodRange();
+
+    periodDraft = { preset: period.preset, start: r.start || '', end: r.end || '' };
+
+    const f = $('periodForm');
+    f.elements.start.value = periodDraft.start;
+    f.elements.end.value = periodDraft.end;
+
+    renderPeriodForm();
+    $('periodModalBack').classList.add('show');
+}
+
+function closePeriod() {
+    $('periodModalBack').classList.remove('show');
+}
+
+document.querySelectorAll('#periodPresets [data-preset]').forEach(b => {
+    b.onclick = () => {
+        const r = presetRange(b.dataset.preset);
+        const f = $('periodForm');
+
+        periodDraft = { preset: b.dataset.preset, start: r.start || '', end: r.end || '' };
+        f.elements.start.value = periodDraft.start;
+        f.elements.end.value = periodDraft.end;
+        renderPeriodForm();
+    };
+});
+
+// Mexer nas datas troca o atalho para "personalizado".
+$('periodForm').addEventListener('input', (e) => {
+    if (!['start', 'end'].includes(e.target.name)) return;
+
+    const f = $('periodForm');
+
+    periodDraft = { preset: 'custom', start: f.elements.start.value, end: f.elements.end.value };
+    renderPeriodForm();
+});
+
+$('closePeriod').onclick = $('cancelPeriod').onclick = closePeriod;
+$('periodModalBack').addEventListener('click', (e) => {
+    if (e.target.id === 'periodModalBack') closePeriod();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePeriod();
+});
+
+$('periodForm').onsubmit = (e) => {
+    e.preventDefault();
+
+    const { preset, start, end } = periodDraft;
+
+    if (preset === 'all') {
+        period = { preset: 'all' };
+    } else if (preset === 'custom') {
+        if (!start || !end) {
+            toast('Escolha a data inicial e a data final.');
+            return;
+        }
+        if (start > end) {
+            toast('A data inicial deve ser anterior à data final.');
+            return;
+        }
+        period = { preset: 'custom', start, end };
+    } else {
+        period = { preset };
+    }
+
+    localStorage.setItem('cf_period', JSON.stringify(period));
+    closePeriod();
+    render();
+};
+
+// ==========================================
+// APORTES EM METAS (saem do saldo e entram nos relatórios)
+// ==========================================
+
+const SOURCE_LABEL = { FIXA: 'Lucro fixo', VARIAVEL: 'Lucro variável' };
+
+function aportesMes(origem = null) {
+    const mes = todayISO().slice(0, 7);
+
+    return total(aportes.filter(a =>
+        String(a.date).slice(0, 7) === mes && (!origem || a.source === origem)));
+}
+
+// Saldo do mês atual: lucros − gastos − aportes. Também devolve o que resta de cada lucro.
+function saldoMes() {
+    const mes = todayISO().slice(0, 7);
+    const gastos = total(expenses.filter(e => String(e.date).slice(0, 7) === mes));
+
+    return {
+        gastos,
+        saldo: income.fixo + income.variavel - gastos - aportesMes(),
+        fixo: income.fixo - aportesMes('FIXA'),
+        variavel: income.variavel - aportesMes('VARIAVEL')
+    };
+}
+
 function catNames() {
     return categories.map(c => c.name);
 }
@@ -326,6 +536,19 @@ function monthlyIncome() {
     return totalLucros > 0 ? totalLucros : MONTHLY_INCOME;
 }
 
+// Carrega os aportes feitos em metas (valores que saíram do saldo).
+async function loadAportesFromDatabase() {
+    try {
+        const resultado = await callApi('api/metas/aportes.php');
+
+        aportes = resultado.aportes.map(a => ({ ...a, value: Number(a.value) }));
+        render();
+    } catch (erro) {
+        console.error('Erro ao carregar aportes:', erro);
+        toast(erro.message);
+    }
+}
+
 // Carrega as categorias do MySQL. Sem categorias cadastradas, a lista fica vazia.
 async function loadCategoriesFromDatabase() {
     try {
@@ -468,8 +691,9 @@ function expenseTableMini(arr) {
 
 // Barras de gastos por categoria, a partir dos lançamentos carregados.
 function categoryBars() {
+    const pe = periodExpenses();
     const sums = catNames()
-        .map(nome => ({ name: nome, value: total(expenses.filter(e => e.category === nome)) }))
+        .map(nome => ({ name: nome, value: total(pe.filter(e => e.category === nome)) }))
         .filter(x => x.value > 0)
         .sort((a, b) => b.value - a.value);
 
@@ -536,17 +760,16 @@ function filtered() {
         const okPagamento = !paymentFilter || e.payment === paymentFilter;
         const texto = (e.description + ' ' + e.category + ' ' + e.who + ' ' + e.payment).toLowerCase();
 
-        return okPagamento && (!termo || texto.includes(termo));
+        return inPeriod(e.date) && okPagamento && (!termo || texto.includes(termo));
     });
 }
 
-// Redesenha só a tabela de lançamentos aplicando pesquisa, categoria e período.
+// Redesenha só a tabela de lançamentos aplicando pesquisa, categoria e o período global.
 function refreshExpenseTable() {
     const categoria = $('categoryFilter').value;
-    const mes = $('monthFilter').value;
 
     const arr = filtered()
-        .filter(e => (!categoria || e.category === categoria) && (!mes || e.date.startsWith(mes)))
+        .filter(e => !categoria || e.category === categoria)
         .sort((a, b) => b.date.localeCompare(a.date));
 
     $('expenseTable').innerHTML = expenseTable(arr);
@@ -565,9 +788,10 @@ function resetFilters() {
 
 // Painel inicial.
 function homePage() {
-    const sum = total(expenses);
+    const pe = periodExpenses();
+    const sum = total(pe);
     const monthSum = total(expenses.filter(e => e.date.slice(0, 7) === todayISO().slice(0, 7)));
-    const recentes = expenses.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+    const recentes = pe.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
     const meta = spendGoalInfo();
 
     return `
@@ -575,12 +799,13 @@ function homePage() {
         'Visão geral',
         'Acompanhe suas finanças e mantenha seus objetivos em dia.',
         `<button class="btn primary" onclick="openExpense()">＋ Novo lançamento</button>`)}
+    ${periodBar()}
     ${incomeCards()}
     <div class="grid stats">
-        ${stat('Gastos registrados', money(sum), '↗ Atualizado com seus lançamentos', '▥')}
+        ${stat('Gastos registrados', money(sum), 'No período selecionado', '▥')}
         ${stat('Gastos do mês', money(monthSum), 'Este mês', '▤')}
-        ${stat('Saldo estimado', money(monthlyIncome() - sum), 'Considerando renda mensal de ' + money(monthlyIncome()), '◉')}
-        ${stat('Lançamentos', expenses.length, 'Registros cadastrados', '☷')}
+        ${stat('Saldo estimado', money(saldoMes().saldo), 'Lucros do mês − gastos − aportes em metas', '◉')}
+        ${stat('Lançamentos', pe.length, 'No período selecionado', '☷')}
     </div>
     <div class="grid two-col">
         <div class="card">
@@ -639,13 +864,13 @@ function incomeCards() {
 function expensesPage() {
     const arr = filtered().slice().sort((a, b) => b.date.localeCompare(a.date));
     const catSelecionada = new URLSearchParams(location.search).get('cat');
-    const periodos = [...new Set(expenses.map(e => e.date.slice(0, 7)))].sort().reverse();
 
     return `
     ${head(
         'Lançamentos',
         'Organize e acompanhe todas as suas despesas.',
         `<button class="btn primary" onclick="openExpense()">＋ Novo lançamento</button>`)}
+    ${periodBar()}
     ${incomeCards()}
     <div class="grid stats">
         ${stat('Total filtrado', money(total(arr)), 'Soma dos lançamentos exibidos', '▥')}
@@ -659,10 +884,6 @@ function expensesPage() {
             <option value="">Todas as categorias</option>
             ${catNames().map(c => `<option${catSelecionada === c ? ' selected' : ''}>${esc(c)}</option>`).join('')}
         </select>
-        <select class="field" id="monthFilter" data-dd-icon="📅">
-            <option value="">Todos os períodos</option>
-            ${periodos.map(m => `<option value="${m}">${m.split('-').reverse().join('/')}</option>`).join('')}
-        </select>
         ${paymentFilter ? `<button class="chip active" onclick="paymentFilter='';render()">${esc(paymentFilter)} ×</button>` : ''}
         <button class="btn" onclick="resetFilters()">Limpar filtros</button>
     </div>
@@ -671,33 +892,29 @@ function expensesPage() {
 
 // Relatórios e gráficos. Os totais são derivados dos lançamentos.
 function reportsPage() {
-    const sum = total(expenses);
-    const month = expenses.filter(e => e.date.slice(0, 7) === todayISO().slice(0, 7));
+    const pe = periodExpenses();
+    const ap = periodAportes();
+    const sum = total(pe);
 
     const byPay = PAYMENT_METHODS
-        .map(p => ({ p, v: total(expenses.filter(e => e.payment === p)) }))
+        .map(p => ({ p, v: total(pe.filter(e => e.payment === p)) }))
         .filter(x => x.v);
 
     const top = catNames()
-        .map(c => ({ c, v: total(expenses.filter(e => e.category === c)) }))
+        .map(c => ({ c, v: total(pe.filter(e => e.category === c)) }))
         .sort((a, b) => b.v - a.v)
         .slice(0, 5);
 
     return `
     ${head(
         'Relatórios e gráficos',
-        'Visualize seus gastos e entenda para onde vai seu dinheiro.',
-        `<select class="field" id="reportPeriod">
-            <option>Mensal</option>
-            <option>Semanal</option>
-            <option>Diário</option>
-            <option>Anual</option>
-        </select>`)}
+        'Visualize seus gastos e entenda para onde vai seu dinheiro.')}
+    ${periodBar()}
     <div class="grid stats">
-        ${stat('Total de gastos', money(sum), 'Em todos os lançamentos', '↓')}
-        ${stat('Gastos do período', money(total(month)), 'Mês atual', '▥')}
-        ${stat('Média por lançamento', money(expenses.length ? sum / expenses.length : 0), 'Valor médio', '◉')}
-        ${stat('Categorias utilizadas', new Set(expenses.map(e => e.category)).size, 'Com gastos registrados', '◆')}
+        ${stat('Total de gastos', money(sum), 'No período selecionado', '↓')}
+        ${stat('Aportes em metas', money(total(ap)), ap.length + (ap.length === 1 ? ' aporte' : ' aportes') + ' no período', '◎')}
+        ${stat('Média por lançamento', money(pe.length ? sum / pe.length : 0), 'Valor médio', '◉')}
+        ${stat('Categorias utilizadas', new Set(pe.map(e => e.category)).size, 'Com gastos registrados', '◆')}
     </div>
     <div class="grid two-col">
         <div class="card">
@@ -733,11 +950,31 @@ function reportsPage() {
                     <strong>${money(x.v)}</strong>
                 </div>`).join('')}
         </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+        <h3 class="section-title">Aportes em metas</h3>
+        ${aporteList(ap)}
     </div>`;
 }
 
+// Lista dos aportes feitos em metas (valores que saíram do saldo).
+function aporteList(arr) {
+    if (!arr.length) {
+        return '<p class="muted">Nenhum aporte em metas neste período.</p>';
+    }
+
+    return arr.map(a => `
+        <div class="payrow">
+            <span>
+                <span class="cat-icon" style="display:inline-grid;vertical-align:middle;margin-right:8px;width:27px;height:27px">${esc(goalIcon(a.goalIcon))}</span>${esc(a.goalName)}
+                <small class="muted">· ${prettyDate(a.date)} · ${SOURCE_LABEL[a.source] || ''}</small>
+            </span>
+            <strong>${money(a.value)}</strong>
+        </div>`).join('');
+}
+
 // Desenha os gráficos nos canvas usando os lançamentos em memória.
-// idx 0 = linha (gastos por faixa de dias); idx 1 = barras (gastos por semana).
+// idx 0 = linha e idx 1 = barras; ambos usam faixas de datas do período escolhido.
 function drawCharts() {
     ['lineChart', 'barChart'].forEach((id, idx) => {
         const canvas = $(id);
@@ -768,16 +1005,14 @@ function drawCharts() {
             ctx.stroke();
         }
 
-        const labels = idx
-            ? ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5']
-            : ['01', '05', '10', '15', '20', '25', '30'];
+        // O período escolhido é dividido em faixas de datas iguais.
+        const faixas = periodBuckets(idx ? 5 : 7);
+        const labels = faixas.map(f => f.label);
 
-        const vals = labels.map((_, i) => total(expenses.filter(e => {
-            const dia = Number(e.date.slice(-2));
+        const vals = faixas.map(f => total(expenses.filter(e => {
+            const d = String(e.date).slice(0, 10);
 
-            return idx
-                ? Math.min(4, Math.floor((dia - 1) / 7)) === i
-                : Math.abs(dia - (i * 5 + 1)) < 5;
+            return d >= f.de && d <= f.ate;
         })));
 
         const max = Math.max(1, ...vals) * 1.2;
@@ -822,6 +1057,7 @@ function drawCharts() {
 // Gerenciamento de categorias, uso e totais por categoria.
 function categoriesPage() {
     const names = catNames();
+    const pe = periodExpenses();
 
     const linhas = categories.length
         ? categories.map(c => `
@@ -832,8 +1068,8 @@ function categoriesPage() {
                         <strong>${esc(c.name)}</strong>
                     </div>
                 </td>
-                <td>${expenses.filter(e => e.category === c.name).length}</td>
-                <td>${money(total(expenses.filter(e => e.category === c.name)))}</td>
+                <td>${pe.filter(e => e.category === c.name).length}</td>
+                <td>${money(total(pe.filter(e => e.category === c.name)))}</td>
                 <td><span class="tag">Ativa</span></td>
                 <td class="actions">${c.global
                     ? '<span class="muted" style="font-size:11px">Padrão do sistema</span>'
@@ -848,11 +1084,12 @@ function categoriesPage() {
         'Categorias',
         'Gerencie as categorias usadas para organizar seus gastos.',
         `<button class="btn primary" onclick="addCategory()">＋ Nova categoria</button>`)}
+    ${periodBar()}
     <div class="grid stats">
         ${stat('Categorias', categories.length, 'Cadastradas', '◆')}
-        ${stat('Com movimentação', names.filter(c => expenses.some(e => e.category === c)).length, 'Em uso', '▥')}
-        ${stat('Sem movimentação', names.filter(c => !expenses.some(e => e.category === c)).length, 'Disponíveis para uso', '◉')}
-        ${stat('Total de gastos', money(total(expenses)), 'Todos os registros', '↓')}
+        ${stat('Com movimentação', names.filter(c => pe.some(e => e.category === c)).length, 'No período', '▥')}
+        ${stat('Sem movimentação', names.filter(c => !pe.some(e => e.category === c)).length, 'Sem gastos no período', '◉')}
+        ${stat('Total de gastos', money(total(pe)), 'No período selecionado', '↓')}
     </div>
     <div class="card">
         <div class="table-wrap">
@@ -981,12 +1218,10 @@ function render() {
             refreshExpenseTable();
         };
         $('categoryFilter').onchange = refreshExpenseTable;
-        $('monthFilter').onchange = refreshExpenseTable;
     }
 
     if (page === 'reports') {
         drawCharts();
-        $('reportPeriod').onchange = e => toast('Visualização selecionada: ' + e.target.value);
     }
 }
 
@@ -1603,6 +1838,26 @@ $('goalEditForm').onsubmit = async (e) => {
         return;
     }
 
+    // Adicionar valor: o dinheiro sai do saldo, então pergunta de qual lucro e confere o saldo.
+    const valorAdicionado = Math.round((Number(f.elements.valor.value) || 0) * 100) / 100;
+
+    if (f.elements.modo.value === 'adicionar' && valorAdicionado > 0) {
+        const meta = goals.find(g => String(g.id) === String(f.elements.id.value));
+
+        if (!meta) {
+            toast('Meta não encontrada.');
+            return;
+        }
+
+        openAporte(meta, valorAdicionado, {
+            name: f.elements.name.value.trim(),
+            target: f.elements.target.value,
+            due: f.elements.due.value,
+            icon: f.elements.icon.value
+        });
+        return;
+    }
+
     // O banco recebe sempre o valor final já calculado (somado ou substituído).
     f.elements.saved.value = goalEditNewSaved().toFixed(2);
 
@@ -1648,6 +1903,133 @@ $('goalEditForm').onsubmit = async (e) => {
         console.error('Erro ao atualizar meta:', erro);
 
         toast(erro.message);
+    }
+};
+
+
+// ==========================================
+// APORTE EM META: ORIGEM (LUCRO FIXO/VARIÁVEL) E SALDO
+// ==========================================
+
+let pendingAporte = null; // { meta, valor, campos }
+
+// Abre o popup que pergunta de qual lucro sai o valor e confere se há saldo.
+function openAporte(meta, valor, campos) {
+    const s = saldoMes();
+    const semLucro = income.fixo + income.variavel <= 0;
+    const f = $('aporteForm');
+    const folga = 0.004;
+    let escolhida = null;
+
+    pendingAporte = { meta, valor, campos };
+
+    $('aporteIcon').textContent = goalIcon(meta.icon);
+    $('aporteSub').textContent = 'Guardar ' + money(valor) + ' em “' + meta.name + '”';
+
+    ['FIXA', 'VARIAVEL'].forEach(tipo => {
+        const disponivel = tipo === 'FIXA' ? s.fixo : s.variavel;
+        const radio = f.querySelector('input[value="' + tipo + '"]');
+        const ok = valor <= disponivel + folga && valor <= s.saldo + folga;
+
+        radio.checked = false;
+        radio.disabled = !ok;
+        $('aporteAvail' + tipo).textContent = 'Disponível: ' + money(Math.max(0, disponivel)) +
+            (valor > disponivel + folga ? ' · saldo insuficiente' : '');
+
+        if (ok && !escolhida) escolhida = radio;
+    });
+
+    if (escolhida) escolhida.checked = true;
+
+    const hint = $('aporteHint');
+
+    hint.classList.toggle('error', !escolhida);
+    $('confirmAporte').disabled = !escolhida;
+
+    if (escolhida) {
+        hint.textContent = 'Saldo do mês: ' + money(s.saldo) + ' → ' + money(s.saldo - valor) + ' após o aporte.';
+    } else if (semLucro) {
+        hint.textContent = 'Cadastre seu lucro fixo ou variável do mês para poder guardar valores nas metas.';
+    } else if (valor > s.saldo + folga) {
+        hint.textContent = 'Saldo insuficiente: o saldo do mês é de ' + money(Math.max(0, s.saldo)) +
+            ' (lucros − gastos − aportes) e você tentou guardar ' + money(valor) + '.';
+    } else {
+        hint.textContent = 'Nenhum dos lucros tem saldo suficiente para guardar ' + money(valor) + '.';
+    }
+
+    $('aporteModalBack').classList.add('show');
+}
+
+function closeAporte() {
+    $('aporteModalBack').classList.remove('show');
+    pendingAporte = null;
+}
+
+$('closeAporte').onclick = $('cancelAporte').onclick = closeAporte;
+$('aporteModalBack').addEventListener('click', (e) => {
+    if (e.target.id === 'aporteModalBack') closeAporte();
+});
+
+// Esc fecha só este popup (a edição da meta continua aberta por baixo).
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && $('aporteModalBack').classList.contains('show')) {
+        e.stopPropagation();
+        closeAporte();
+    }
+}, true);
+
+$('aporteForm').onsubmit = async (e) => {
+    e.preventDefault();
+
+    const p = pendingAporte;
+    const marcada = $('aporteForm').querySelector('input[name="origem"]:checked');
+
+    if (!p || !marcada) return;
+
+    const origem = marcada.value;
+    const botao = $('confirmAporte');
+
+    botao.disabled = true;
+
+    try {
+        // Dados da meta (nome, valor desejado, prazo, ícone) que também foram editados.
+        const mudou = p.campos.name !== p.meta.name
+            || Number(p.campos.target) !== Number(p.meta.target)
+            || p.campos.due !== p.meta.due
+            || p.campos.icon !== goalIcon(p.meta.icon);
+
+        if (mudou) {
+            await callApi('api/metas/editar.php', {
+                id: p.meta.id,
+                name: p.campos.name,
+                target: p.campos.target,
+                saved: Number(p.meta.saved).toFixed(2),
+                due: p.campos.due,
+                icon: p.campos.icon
+            });
+        }
+
+        // O servidor confere o saldo de novo antes de gravar o aporte.
+        await callApi('api/metas/aportar.php', {
+            id: p.meta.id,
+            valor: p.valor.toFixed(2),
+            origem,
+            data: todayISO()
+        });
+
+        const nome = p.meta.name;
+        const valor = p.valor;
+
+        closeAporte();
+        closeGoalEdit();
+        await loadGoalsFromDatabase();
+
+        toast(money(valor) + ' guardados em “' + nome + '” (saiu do ' + SOURCE_LABEL[origem].toLowerCase() + ').');
+    } catch (erro) {
+        console.error('Erro ao guardar valor na meta:', erro);
+        toast(erro.message);
+    } finally {
+        botao.disabled = false;
     }
 };
 
@@ -1763,6 +2145,9 @@ async function loadGoalsFromDatabase() {
 
         // Atualiza a tela.
         render();
+
+        // Metas canceladas devolvem o valor ao saldo, então os aportes são recarregados junto.
+        await loadAportesFromDatabase();
 
     } catch (erro) {
 

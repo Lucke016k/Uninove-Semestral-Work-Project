@@ -318,6 +318,86 @@ exigirLoginPagina("PaginaLogin/login.php");
             </form>
         </div>
     </div>
+    <!-- Modal do período exibido (vale para todo o sistema). -->
+    <div class="modal-back" id="periodModalBack">
+        <div class="modal modal-edit modal-profile modal-period" role="dialog" aria-modal="true" aria-labelledby="periodTitle">
+            <div class="modal-head">
+                <div class="modal-title">
+                    <span class="modal-icon" aria-hidden="true">📅</span>
+                    <div>
+                        <h2 id="periodTitle">Período exibido</h2>
+                        <small>Vale para lançamentos, categorias e relatórios</small>
+                    </div>
+                </div>
+                <button type="button" class="close" id="closePeriod" aria-label="Fechar">×</button>
+            </div>
+            <form id="periodForm">
+                <div class="period-presets" id="periodPresets">
+                    <button type="button" class="chip" data-preset="month">Este mês</button>
+                    <button type="button" class="chip" data-preset="lastmonth">Mês passado</button>
+                    <button type="button" class="chip" data-preset="last30">Últimos 30 dias</button>
+                    <button type="button" class="chip" data-preset="year">Este ano</button>
+                    <button type="button" class="chip" data-preset="all">Todo o período</button>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>De</label>
+                        <input name="start" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label>Até</label>
+                        <input name="end" type="date">
+                    </div>
+                    <p class="income-hint full-col" id="periodHint"></p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="cancelPeriod">Cancelar</button>
+                    <button class="btn primary" type="submit">Aplicar período</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de aporte em meta: pergunta de qual lucro sai o valor e confere o saldo. -->
+    <div class="modal-back" id="aporteModalBack">
+        <div class="modal modal-edit modal-profile" role="dialog" aria-modal="true" aria-labelledby="aporteTitle">
+            <div class="modal-head">
+                <div class="modal-title">
+                    <span class="modal-icon" id="aporteIcon" aria-hidden="true">🎯</span>
+                    <div>
+                        <h2 id="aporteTitle">De onde sai o valor?</h2>
+                        <small id="aporteSub"></small>
+                    </div>
+                </div>
+                <button type="button" class="close" id="closeAporte" aria-label="Fechar">×</button>
+            </div>
+            <form id="aporteForm">
+                <p class="income-help">O valor será descontado do saldo do mês e registrado nos relatórios. Escolha de qual lucro ele sai:</p>
+                <div class="opt-grid">
+                    <label class="opt-card">
+                        <input type="radio" name="origem" value="FIXA">
+                        <span class="opt-box">
+                            <span class="opt-radio"></span>
+                            <span class="opt-text"><strong>Lucro fixo</strong><small id="aporteAvailFIXA"></small></span>
+                        </span>
+                    </label>
+                    <label class="opt-card">
+                        <input type="radio" name="origem" value="VARIAVEL">
+                        <span class="opt-box">
+                            <span class="opt-radio"></span>
+                            <span class="opt-text"><strong>Lucro variável</strong><small id="aporteAvailVARIAVEL"></small></span>
+                        </span>
+                    </label>
+                </div>
+                <p class="income-hint" id="aporteHint"></p>
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="cancelAporte">Voltar</button>
+                    <button class="btn primary" type="submit" id="confirmAporte">Confirmar aporte</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal da meta de gasto (valor limite + período de até 30 dias). -->
     <div class="modal-back" id="spendGoalModalBack">
         <div class="modal modal-edit modal-profile" role="dialog" aria-modal="true" aria-labelledby="spendGoalTitle">
