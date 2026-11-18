@@ -222,10 +222,6 @@ if (empty($_SESSION['csrf_token'])) {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Quem gastou?</label>
-                        <input name="who" value="Eu" placeholder="Nome">
-                    </div>
-                    <div class="form-group">
                         <label>Parcelado?</label>
                         <select name="installments">
                             <option value="Não">Não</option>

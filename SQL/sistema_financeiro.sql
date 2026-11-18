@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 16/11/2026 às 00:01
+-- Tempo de geração: 18/11/2026 às 02:27
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -24,43 +24,29 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Estrutura para tabela `categoria`
+-- Estrutura para tabela `aporte_meta`
 --
+
+CREATE TABLE `aporte_meta` (
+  `ID_APORTE` bigint(20) UNSIGNED NOT NULL,
+  `ID_USUARIO` bigint(20) UNSIGNED NOT NULL,
+  `ID_META` bigint(20) UNSIGNED NOT NULL,
+  `VALOR` decimal(13,2) NOT NULL,
+  `ORIGEM` enum('FIXA','VARIAVEL') NOT NULL,
+  `DATA_APORTE` date NOT NULL,
+  `CRIADO_EM` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 CREATE TABLE `categoria` (
   `ID_CATEGORIA` bigint(20) UNSIGNED NOT NULL,
   `ID_USUARIO` bigint(20) UNSIGNED DEFAULT NULL,
   `NOME` varchar(80) NOT NULL,
   `TIPO` enum('RECEITA','DESPESA','AMBOS') NOT NULL DEFAULT 'DESPESA',
-  `COR` char(7) DEFAULT NULL,
   `ATIVO` tinyint(1) NOT NULL DEFAULT 1,
   `CRIADO_EM` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `configuracao`
---
-
-CREATE TABLE `configuracao` (
-  `ID_CONFIGURACAO` bigint(20) UNSIGNED NOT NULL,
-  `ID_USUARIO` bigint(20) UNSIGNED NOT NULL,
-  `TEMA` enum('CLARO','ESCURO','SISTEMA') NOT NULL DEFAULT 'CLARO',
-  `MOEDA` char(3) NOT NULL DEFAULT 'BRL',
-  `FORMATO_DATA` varchar(20) NOT NULL DEFAULT 'DD/MM/YYYY',
-  `NOTIFICACOES` tinyint(1) NOT NULL DEFAULT 1,
-  `LIMITE_GASTOS_MENSAL` decimal(13,2) NOT NULL DEFAULT 3500.00,
-  `ATUALIZADO_EM` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `forma_pagamento`
---
 
 CREATE TABLE `forma_pagamento` (
   `ID_FORMA_PAGAMENTO` bigint(20) UNSIGNED NOT NULL,
@@ -73,14 +59,15 @@ CREATE TABLE `forma_pagamento` (
 -- Despejando dados para a tabela `forma_pagamento`
 --
 
-INSERT INTO `forma_pagamento` VALUES(1, 'CARTÃO DE CRÉDITO', 'CREDITO', 1);
-INSERT INTO `forma_pagamento` VALUES(2, 'CARTÃO DE DÉBITO', 'DEBITO', 1);
-INSERT INTO `forma_pagamento` VALUES(3, 'VR', 'BENEFICIO', 1);
-INSERT INTO `forma_pagamento` VALUES(4, 'VA', 'BENEFICIO', 1);
-INSERT INTO `forma_pagamento` VALUES(5, 'TICKET', 'BENEFICIO', 1);
-INSERT INTO `forma_pagamento` VALUES(6, 'DINHEIRO', 'DINHEIRO', 1);
-INSERT INTO `forma_pagamento` VALUES(7, 'PIX', 'PIX', 1);
-INSERT INTO `forma_pagamento` VALUES(8, 'TRANSFERÊNCIA BANCÁRIA', 'TRANSFERENCIA', 1);
+INSERT INTO `forma_pagamento` (`ID_FORMA_PAGAMENTO`, `NOME`, `TIPO`, `ATIVO`) VALUES
+(1, 'CARTÃO DE CRÉDITO', 'CREDITO', 1),
+(2, 'CARTÃO DE DÉBITO', 'DEBITO', 1),
+(3, 'VR', 'BENEFICIO', 1),
+(4, 'VA', 'BENEFICIO', 1),
+(5, 'TICKET', 'BENEFICIO', 1),
+(6, 'DINHEIRO', 'DINHEIRO', 1),
+(7, 'PIX', 'PIX', 1),
+(8, 'TRANSFERÊNCIA BANCÁRIA', 'TRANSFERENCIA', 1);
 
 -- --------------------------------------------------------
 
@@ -99,18 +86,12 @@ CREATE TABLE `lancamento` (
   `DATA_VENCIMENTO` date DEFAULT NULL,
   `TIPO` enum('RECEITA','DESPESA') NOT NULL,
   `NATUREZA_RECEITA` enum('FIXA','VARIAVEL') DEFAULT NULL,
-  `RESPONSAVEL` varchar(120) DEFAULT NULL,
   `OBSERVACAO` text DEFAULT NULL,
   `STATUS` enum('PENDENTE','PAGO','CANCELADO') NOT NULL DEFAULT 'PENDENTE',
   `ID_LANCAMENTO_ORIGINAL` bigint(20) UNSIGNED DEFAULT NULL,
   `CRIADO_EM` timestamp NOT NULL DEFAULT current_timestamp(),
   `ATUALIZADO_EM` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Despejando dados para a tabela `lancamento`
---
-
 
 -- --------------------------------------------------------
 
@@ -132,36 +113,6 @@ CREATE TABLE `meta` (
   `CRIADO_EM` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `parcela`
---
-
-CREATE TABLE `parcela` (
-  `ID_PARCELA` bigint(20) UNSIGNED NOT NULL,
-  `ID_PARCELAMENTO` bigint(20) UNSIGNED NOT NULL,
-  `NUMERO_PARCELA` smallint(5) UNSIGNED NOT NULL,
-  `VALOR` decimal(13,2) NOT NULL,
-  `DATA_VENCIMENTO` date NOT NULL,
-  `STATUS` enum('PENDENTE','PAGO','CANCELADO') NOT NULL DEFAULT 'PENDENTE',
-  `DATA_PAGAMENTO` date DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `parcelamento`
---
-
-CREATE TABLE `parcelamento` (
-  `ID_PARCELAMENTO` bigint(20) UNSIGNED NOT NULL,
-  `ID_LANCAMENTO` bigint(20) UNSIGNED NOT NULL,
-  `QUANTIDADE_PARCELAS` smallint(5) UNSIGNED NOT NULL,
-  `VALOR_TOTAL` decimal(13,2) NOT NULL,
-  `DATA_PRIMEIRA_PARCELA` date NOT NULL,
-  `CRIADO_EM` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -178,9 +129,6 @@ CREATE TABLE `recuperacao_senha` (
   `CRIADO_EM` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Despejando dados para a tabela `recuperacao_senha`
---
 
 -- --------------------------------------------------------
 
@@ -200,18 +148,19 @@ CREATE TABLE `usuario` (
 
 
 --
+-- Índices de tabela `aporte_meta`
+--
+ALTER TABLE `aporte_meta`
+  ADD PRIMARY KEY (`ID_APORTE`),
+  ADD KEY `IDX_APORTE_USUARIO_DATA` (`ID_USUARIO`,`DATA_APORTE`),
+  ADD KEY `IDX_APORTE_META` (`ID_META`);
+
+--
 -- Índices de tabela `categoria`
 --
 ALTER TABLE `categoria`
   ADD PRIMARY KEY (`ID_CATEGORIA`),
   ADD KEY `IDX_CATEGORIA_USUARIO_TIPO` (`ID_USUARIO`,`TIPO`);
-
---
--- Índices de tabela `configuracao`
---
-ALTER TABLE `configuracao`
-  ADD PRIMARY KEY (`ID_CONFIGURACAO`),
-  ADD UNIQUE KEY `UQ_CONFIGURACAO_USUARIO` (`ID_USUARIO`);
 
 --
 -- Índices de tabela `forma_pagamento`
@@ -239,21 +188,6 @@ ALTER TABLE `meta`
   ADD KEY `IDX_META_USUARIO_STATUS` (`ID_USUARIO`,`STATUS`);
 
 --
--- Índices de tabela `parcela`
---
-ALTER TABLE `parcela`
-  ADD PRIMARY KEY (`ID_PARCELA`),
-  ADD UNIQUE KEY `UQ_PARCELA_NUMERO` (`ID_PARCELAMENTO`,`NUMERO_PARCELA`),
-  ADD KEY `IDC_PARCELA_VENCIMENTO_STATUS` (`DATA_VENCIMENTO`,`STATUS`);
-
---
--- Índices de tabela `parcelamento`
---
-ALTER TABLE `parcelamento`
-  ADD PRIMARY KEY (`ID_PARCELAMENTO`),
-  ADD UNIQUE KEY `UQ_PARCELMANETO_LANCAMENTO` (`ID_LANCAMENTO`);
-
---
 -- Índices de tabela `recuperacao_senha`
 --
 ALTER TABLE `recuperacao_senha`
@@ -272,16 +206,16 @@ ALTER TABLE `usuario`
 --
 
 --
+-- AUTO_INCREMENT de tabela `aporte_meta`
+--
+ALTER TABLE `aporte_meta`
+  MODIFY `ID_APORTE` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT de tabela `categoria`
 --
 ALTER TABLE `categoria`
-  MODIFY `ID_CATEGORIA` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
-
---
--- AUTO_INCREMENT de tabela `configuracao`
---
-ALTER TABLE `configuracao`
-  MODIFY `ID_CONFIGURACAO` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `ID_CATEGORIA` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de tabela `forma_pagamento`
@@ -293,53 +227,42 @@ ALTER TABLE `forma_pagamento`
 -- AUTO_INCREMENT de tabela `lancamento`
 --
 ALTER TABLE `lancamento`
-  MODIFY `ID_LANCAMENTO` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `ID_LANCAMENTO` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT de tabela `meta`
 --
 ALTER TABLE `meta`
-  MODIFY `ID_META` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `parcela`
---
-ALTER TABLE `parcela`
-  MODIFY `ID_PARCELA` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `parcelamento`
---
-ALTER TABLE `parcelamento`
-  MODIFY `ID_PARCELAMENTO` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `ID_META` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de tabela `recuperacao_senha`
 --
 ALTER TABLE `recuperacao_senha`
-  MODIFY `ID_RECUPERACAO` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
+  MODIFY `ID_RECUPERACAO` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- AUTO_INCREMENT de tabela `usuario`
 --
 ALTER TABLE `usuario`
-  MODIFY `ID_USUARIO` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `ID_USUARIO` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Restrições para tabelas despejadas
 --
 
 --
+-- Restrições para tabelas `aporte_meta`
+--
+ALTER TABLE `aporte_meta`
+  ADD CONSTRAINT `APORTE_META_FK` FOREIGN KEY (`ID_META`) REFERENCES `meta` (`ID_META`) ON DELETE CASCADE,
+  ADD CONSTRAINT `APORTE_USUARIO_FK` FOREIGN KEY (`ID_USUARIO`) REFERENCES `usuario` (`ID_USUARIO`) ON DELETE CASCADE;
+
+--
 -- Restrições para tabelas `categoria`
 --
 ALTER TABLE `categoria`
   ADD CONSTRAINT `CATEGORIA_ID_USUARIO_FK` FOREIGN KEY (`ID_USUARIO`) REFERENCES `usuario` (`ID_USUARIO`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `configuracao`
---
-ALTER TABLE `configuracao`
-  ADD CONSTRAINT `CONFIGURACAO_USUARIO_FK` FOREIGN KEY (`ID_USUARIO`) REFERENCES `usuario` (`ID_USUARIO`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `lancamento`
@@ -357,40 +280,10 @@ ALTER TABLE `meta`
   ADD CONSTRAINT `META_USUARIO_FK` FOREIGN KEY (`ID_USUARIO`) REFERENCES `usuario` (`ID_USUARIO`) ON DELETE CASCADE;
 
 --
--- Restrições para tabelas `parcela`
---
-ALTER TABLE `parcela`
-  ADD CONSTRAINT `PARCELA_PARCELAMENTO_FK` FOREIGN KEY (`ID_PARCELAMENTO`) REFERENCES `parcelamento` (`ID_PARCELAMENTO`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `parcelamento`
---
-ALTER TABLE `parcelamento`
-  ADD CONSTRAINT `PARCELAMENTO_LANCAMENTO_FK` FOREIGN KEY (`ID_LANCAMENTO`) REFERENCES `lancamento` (`ID_LANCAMENTO`) ON DELETE CASCADE;
-
---
 -- Restrições para tabelas `recuperacao_senha`
 --
 ALTER TABLE `recuperacao_senha`
   ADD CONSTRAINT `FK_RECUPERACAO_USUARIO` FOREIGN KEY (`ID_USUARIO`) REFERENCES `usuario` (`ID_USUARIO`) ON DELETE CASCADE;
---
--- Estrutura para tabela `aporte_meta` (aportes em metas)
---
-CREATE TABLE IF NOT EXISTS `aporte_meta` (
-  `ID_APORTE` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `ID_USUARIO` bigint(20) UNSIGNED NOT NULL,
-  `ID_META` bigint(20) UNSIGNED NOT NULL,
-  `VALOR` decimal(13,2) NOT NULL,
-  `ORIGEM` enum('FIXA','VARIAVEL') NOT NULL,
-  `DATA_APORTE` date NOT NULL,
-  `CRIADO_EM` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`ID_APORTE`),
-  KEY `IDX_APORTE_USUARIO_DATA` (`ID_USUARIO`,`DATA_APORTE`),
-  KEY `IDX_APORTE_META` (`ID_META`),
-  CONSTRAINT `APORTE_USUARIO_FK` FOREIGN KEY (`ID_USUARIO`) REFERENCES `usuario` (`ID_USUARIO`) ON DELETE CASCADE,
-  CONSTRAINT `APORTE_META_FK` FOREIGN KEY (`ID_META`) REFERENCES `meta` (`ID_META`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

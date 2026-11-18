@@ -38,7 +38,6 @@ $valor = (float) ($_POST['value'] ?? 0);
 $data = $_POST['date'] ?? '';
 $categoria = trim($_POST['category'] ?? '');
 $pagamento = $_POST['payment'] ?? '';
-$responsavel = trim($_POST['who'] ?? 'Eu');
 $parcelado = $_POST['installments'] ?? 'Não';
 
 // Verifica os Campos obrigatórios.
@@ -194,7 +193,6 @@ try{
             VALOR,
             DATA_LANCAMENTO,
             TIPO,
-            RESPONSAVEL,
             OBSERVACAO
         )
         VALUES(
@@ -205,7 +203,6 @@ try{
             :valor,
             :data,
             'DESPESA',
-            :responsavel,
             :observacao
         )
     ";
@@ -221,7 +218,6 @@ try{
         ':descricao' => $descricao,
         ':valor' => $valor,
         ':data' => $data,
-        ':responsavel' => $responsavel,
         ':observacao' => $observacao,
     ]);
 

@@ -53,7 +53,6 @@ try {
                 ELSE fp.NOME
             END AS payment,
 
-            l.RESPONSAVEL AS who,
             CASE
                 WHEN l.OBSERVACAO LIKE 'Parcelado em %x' THEN SUBSTRING(l.OBSERVACAO, 14)
                 ELSE 'Não'

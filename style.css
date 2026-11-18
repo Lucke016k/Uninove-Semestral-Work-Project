@@ -379,21 +379,25 @@
             grid-template-columns:repeat(2,minmax(0,1fr));
             gap:13px
         }
-        .form-group{
-            display:grid;
-            gap:7px
+        .form-group {
+            display: grid;
+            gap: 7px;
+            align-content: start;
         }
         .form-group label{
             font-size:11px;
             color:#69766a
         }
-        .form-group input,.form-group select{
-            width:100%;
-            padding:11px;
-            border:1px solid var(--line);
-            background:#fffdf7;
-            border-radius:8px;
-            color:var(--text)
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            height: 44px;
+            padding: 11px;
+            margin: 0;
+            border: 1px solid var(--line);
+            background: #fffdf7;
+            border-radius: 8px;
+            color: var(--text);
         }
         .form-group.full{
             grid-column:1/-1

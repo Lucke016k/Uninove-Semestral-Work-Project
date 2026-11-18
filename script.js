@@ -803,7 +803,6 @@ function expenseRows(arr) {
             </td>
             <td>${money(e.value)}</td>
             <td>${prettyDate(e.date)}</td>
-            <td>${esc(e.who)}</td>
             <td><span class="tag">${esc(e.installments)}</span></td>
             <td><span class="tag">${esc(e.payment)}</span></td>
             <td>${esc(e.category)}</td>
@@ -824,7 +823,6 @@ function expenseTable(arr) {
                     <th>DESCRIÇÃO</th>
                     <th>VALOR</th>
                     <th>DATA</th>
-                    <th>QUEM GASTOU</th>
                     <th>PARCELADO</th>
                     <th>PAGAMENTO</th>
                     <th>CATEGORIA</th>
@@ -936,7 +934,7 @@ function filtered() {
 
     return expenses.filter(e => {
         const okPagamento = !paymentFilter || e.payment === paymentFilter;
-        const texto = (e.description + ' ' + e.category + ' ' + e.who + ' ' + e.payment).toLowerCase();
+        const texto = (e.description + ' ' + e.category + ' ' + e.payment).toLowerCase();
 
         return inPeriod(e.date) && okPagamento && (!termo || texto.includes(termo));
     });
@@ -1525,7 +1523,6 @@ function openExpense(id = null) {
 
     $('expenseCategory').innerHTML = categories.map(c => `<option>${esc(c.name)}</option>`).join('');
     f.elements.date.value = todayISO();
-    f.elements.who.value = user.name || 'Eu';
     $('modalTitle').textContent = id ? 'Editar lançamento' : 'Novo lançamento';
 
     if (id) {
@@ -1537,7 +1534,6 @@ function openExpense(id = null) {
             f.elements.date.value = e.date;
             f.elements.category.value = e.category;
             f.elements.payment.value = e.payment;
-            f.elements.who.value = e.who;
             f.elements.installments.value = e.installments;
         }
     }
@@ -1576,6 +1572,7 @@ function updateInstallmentField() {
     $('installmentHint').textContent = (n >= 2 && valor > 0)
         ? n + 'x de ' + money(valor / n)
         : 'Informe de 2 a 48 parcelas.';
+   
 }
 
 $('expenseForm').addEventListener('change', e => {

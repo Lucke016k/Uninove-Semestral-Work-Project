@@ -46,7 +46,6 @@ $valorTexto = $_POST['value'] ?? '';
 $data = $_POST['date'] ?? '';
 $categoria = trim($_POST['category'] ?? '');
 $pagamento = $_POST['payment'] ?? '';
-$responsavel = trim($_POST['who'] ?? 'Eu');
 $parcelado = $_POST['installments'] ?? 'Não';
 
 // Converte o valor para o número.
@@ -227,7 +226,6 @@ try {
             DESCRICAO = :descricao,
             VALOR = :valor,
             DATA_LANCAMENTO = :data,
-            RESPONSAVEL = :responsavel,
             OBSERVACAO = :observacao
 
         WHERE ID_LANCAMENTO = :id
@@ -245,7 +243,6 @@ try {
         ':descricao' => $descricao,
         ':valor' => $valor,
         ':data' => $data,
-        ':responsavel' => $responsavel,
         ':observacao' => $observacao,
         ':id' => $idLancamento,
         ':usuario' => $idUsuario
