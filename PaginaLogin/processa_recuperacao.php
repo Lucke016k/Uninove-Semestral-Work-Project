@@ -106,6 +106,7 @@ try {
     <title>Recuperação de senha - UniFinance</title>
 
     <link rel="stylesheet" href="./login.css">
+    <link rel="icon" type="image/png" href="../img/favicon.png">
 </head>
 
 <body class="auth-page">
@@ -113,21 +114,7 @@ try {
     <div class="auth-container">
 
         <header class="auth-brand">
-            <div class="auth-brand-icon">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     width="30" height="30"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
-                    <rect x="3" y="5" width="18" height="15" rx="3"/>
-                    <path d="M3 9h18"/>
-                    <path d="M16 14h2"/>
-                    <path d="M7 5V4a2 2 0 0 1 2-2h8"/>
-                </svg>
-            </div>
+            <img src="../img/unifinance_icone.png" alt="UniFinance" class="auth-logo">
 
             <h1>UniFinance</h1>
             <p>Controle financeiro pessoal</p>

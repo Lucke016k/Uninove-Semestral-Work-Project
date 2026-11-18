@@ -312,3 +312,9 @@
         font-size: 24px;
     }
 }
+.auth-logo {
+    width: 72px;
+    height: 72px;
+    display: block;
+    margin: 0 auto 12px;
+}

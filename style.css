@@ -1384,3 +1384,10 @@
 /* Linha de lucros com um terceiro card (saldo estimado na tela de metas) */
 .income-row.with-extra{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:900px){.income-row.with-extra{grid-template-columns:1fr}}
+
+.brand-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}

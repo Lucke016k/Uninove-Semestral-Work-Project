@@ -78,35 +78,22 @@ if (empty($_SESSION['csrf_token'])) {
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UniFinance</title>
     <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES,'UTF-8') ?>">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="img/favicon.png">
 </head>
 <body>
     <!-- Estrutura principal do aplicativo: menu lateral e área de conteúdo. -->
     <div class="app">
         <!-- Menu lateral: navegação, filtros rápidos de pagamento e resumo mensal. -->
-        <aside class="sidebar">
-            <div class="brand">
-                <div class="brand-icon">
-    <svg xmlns="http://www.w3.org/2000/svg"
-         width="22" height="22"
-         viewBox="0 0 24 24"
-         fill="none"
-         stroke="currentColor"
-         stroke-width="2"
-         stroke-linecap="round"
-         stroke-linejoin="round">
-        <rect x="3" y="5" width="18" height="15" rx="3"/>
-        <path d="M3 9h18"/>
-        <path d="M16 14h2"/>
-        <path d="M7 5V4a2 2 0 0 1 2-2h8"/>
-    </svg>
-</div>
-                <div>
-                    <strong>UniFinance</strong>
-                    <small>Seus gastos, seus objetivos</small>
-                </div>
-            </div>
-            <div>
-                <div class="nav-label">Menu principal</div>
+       <aside class="sidebar">
+    <div class="brand">
+        <img src="img/unifinance_icone_192.png" alt="UniFinance" class="brand-logo">
+        <div>
+            <strong>UniFinance</strong>
+            <small>Seus gastos, seus objetivos</small>
+        </div>
+    </div>
+    <div>
+        <div class="nav-label">Menu principal</div>
                 <!-- data-page identifica qual tela o JavaScript deve renderizar. -->
                 <nav class="nav" id="nav">
                     <button data-page="home" class="active">
