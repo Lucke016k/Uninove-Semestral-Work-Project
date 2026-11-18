@@ -1,13 +1,82 @@
 <?php
-require_once __DIR__ . "/config/auth.php";
+
+// Inicia a sessão.
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+// Importa a conexão.
+require_once __DIR__ . '/config/conexao.php';
+
+// Importa as funções de autenticação.
+require_once __DIR__ . '/config/auth.php';
+
+// Verifica se existe um usuário autenticado.
 exigirLoginPagina("PaginaLogin/login.php");
+
+// Recupera o ID do usuário.
+$idUsuario = $_SESSION['usuario']['id'] ?? null;
+
+if (!$idUsuario) {
+    header('Location: PaginaLogin/login.php');
+    exit;
+}
+
+// Consulta se a conta continua ativa.
+$sql = "
+    SELECT ATIVO
+    FROM usuario
+    WHERE ID_USUARIO = :usuario
+    LIMIT 1
+";
+
+$stmt = $pdo->prepare($sql);
+
+$stmt->execute([
+    ':usuario' => $idUsuario
+]);
+
+$ativo = $stmt->fetchColumn();
+
+// Bloqueia contas desativadas.
+if ($ativo === false || (int) $ativo !== 1) {
+
+    // Limpa os dados da sessão.
+    $_SESSION = [];
+
+    // Remove o cookie da sessão.
+    if (ini_get('session.use_cookies')) {
+
+        $params = session_get_cookie_params();
+
+        setcookie(session_name(), '', [
+            'expires' => time() - 42000,
+            'path' => $params['path'],
+            'domain' => $params['domain'],
+            'secure' => $params['secure'],
+            'httponly' => $params['httponly'],
+            'samesite' => $params['samesite'] ?? 'Lax'
+        ]);
+    }
+
+    session_destroy();
+
+    header('Location: PaginaLogin/login.php?status=conta_desativada');
+    exit;
+}
+
+// Gera o token CSRF.
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 ?>
 
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UniFinance</title>
-
+    <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES,'UTF-8') ?>">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -498,6 +567,7 @@ exigirLoginPagina("PaginaLogin/login.php");
             <div class="confirm-icon" id="confirmIcon"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></div>
             <h2 id="confirmTitle">Excluir item?</h2>
             <p id="confirmText"></p>
+            <input type="text" id="confirmInput" class="field" placeholder="Digite desativar conta" autocomplete="off" style="display: none; width: 100%; margin-top: 12px;">
             <div class="modal-actions">
                 <button type="button" class="btn" id="confirmCancel">Cancelar</button>
                 <button type="button" class="btn btn-danger-solid" id="confirmOk">Excluir</button>

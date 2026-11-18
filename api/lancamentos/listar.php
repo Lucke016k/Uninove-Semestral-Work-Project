@@ -9,6 +9,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 // Importa conexão.
 require_once __DIR__ . '/../../config/conexao.php';
+require_once __DIR__ . '/../../includes/verificar_usuario_ativo.php';
 
 // Função para padronizar as repostas.
 function responder($status, $dados)

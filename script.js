@@ -396,41 +396,119 @@ let editingCategoryId = null; // ID da categoria aberta no popup (null = nova)
  * Mostra o popup de confirmação e devolve uma Promise<boolean>.
  * Com info:true mostra apenas o botão de OK (aviso), sempre devolvendo true.
  */
-function confirmDialog({ title = 'Excluir item?', message = '', confirmLabel = 'Excluir', cancelLabel = 'Cancelar', info = false, neutral = false } = {}) {
+function confirmDialog({
+    title = 'Excluir item?',
+    message = '',
+    confirmLabel = 'Excluir',
+    cancelLabel = 'Cancelar',
+    info = false,
+    neutral = false,
+    requireText = ''
+} = {}) {
+
     return new Promise(resolve => {
+
         const back = $('confirmModalBack');
         const ok = $('confirmOk');
         const cancel = $('confirmCancel');
+        const input = $('confirmInput');
 
+        // Configura o conteúdo do popup.
         $('confirmTitle').textContent = title;
         $('confirmText').textContent = message;
+
         ok.textContent = confirmLabel;
         cancel.textContent = cancelLabel;
+
         cancel.hidden = info;
+
         back.classList.toggle('info', info);
         back.classList.toggle('neutral', neutral);
 
+        // Configura confirmação por texto, quando necessária.
+        const exigeTexto = requireText !== '';
+
+        input.value = '';
+        input.style.display = exigeTexto ? 'block' : 'none';
+
+        input.placeholder = exigeTexto
+            ? `Digite ${requireText}`
+            : '';
+
+        // Bloqueia o botão inicialmente.
+        ok.disabled = exigeTexto;
+
+        // Verifica o texto digitado.
+        const aoDigitar = () => {
+
+            const digitado = input.value
+                .trim()
+                .toLocaleLowerCase('pt-BR');
+
+            const esperado = requireText
+                .trim()
+                .toLocaleLowerCase('pt-BR');
+
+            ok.disabled = exigeTexto && digitado !== esperado;
+        };
+
         const finalizar = (resposta) => {
+
             back.classList.remove('show');
+
             document.removeEventListener('keydown', aoTeclar);
             back.removeEventListener('click', aoClicarFora);
+
+            input.removeEventListener('input', aoDigitar);
+
+            input.value = '';
+            input.style.display = 'none';
+
+            ok.disabled = false;
+
             resolve(resposta);
         };
 
         const aoTeclar = (e) => {
-            if (e.key === 'Escape') finalizar(info);
-        };
-        const aoClicarFora = (e) => {
-            if (e.target === back) finalizar(info);
+
+            if (e.key === 'Escape') {
+                finalizar(info);
+            }
         };
 
-        ok.onclick = () => finalizar(true);
+        const aoClicarFora = (e) => {
+
+            if (e.target === back) {
+                finalizar(info);
+            }
+        };
+
+        // Confirma somente quando o texto estiver correto.
+        ok.onclick = () => {
+
+            if (exigeTexto && ok.disabled) {
+                return;
+            }
+
+            finalizar(true);
+        };
+
         cancel.onclick = () => finalizar(false);
+
+        // Registra os eventos.
+        if (exigeTexto) {
+            input.addEventListener('input', aoDigitar);
+        }
+
         document.addEventListener('keydown', aoTeclar);
         back.addEventListener('click', aoClicarFora);
 
+        // Exibe o popup.
         back.classList.add('show');
-        (info ? ok : cancel).focus();
+
+        // Define onde o cursor ficará.
+        (exigeTexto ? input : info ? ok : cancel).focus();
+
     });
 }
 
@@ -529,6 +607,106 @@ async function loadIncomeFromDatabase() {
     }
 }
 
+// ==========================================
+// DESATIVAR CONTA DO USUÁRIO
+// ==========================================
+
+async function deactivatemyaccount() {
+
+  // Solicita confirmação por texto.
+    const confirmou = await confirmDialog({
+
+        title: 'Desativar minha conta?',
+
+        message:
+            'Essa ação bloqueará seu acesso ao sistema. ' +
+            'Seus dados financeiros serão preservados. ' +
+            'Digite "desativar conta" abaixo para confirmar.',
+
+        confirmLabel: 'Desativar conta',
+
+        cancelLabel: 'Manter minha conta',
+
+        requireText: 'desativar conta',
+
+        neutral: false
+    });
+
+    // Se cancelar ou fechar o popup, interrompe.
+    if (!confirmou) {
+        return;
+    }
+
+    // Recupera o token de segurança.
+    const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        ?.content;
+
+    if (!csrfToken) {
+        toast('Token de segurança não encontrado.');
+        return;
+    }
+
+    try {
+
+        // Envia a solicitação ao PHP.
+        const resposta = await fetch(
+            'api/usuarios/desativar.php',
+            {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken
+                }
+            }
+        );
+
+        window.location.replace(
+            'PaginaLogin/login.php?status=conta_desativada'
+        );
+
+        // Recebe a resposta.
+        const texto = await resposta.text();
+
+        let resultado;
+
+        // Converte a resposta para JSON.
+        try {
+
+            
+            toast(resultado.mensagem);
+
+            resultado = JSON.parse(texto);
+
+        } catch (erro) {
+
+            console.error('Resposta do PHP:', texto);
+
+            throw new Error(
+                'O servidor retornou uma resposta inválida.'
+            );
+        }
+
+        // Verifica se a desativação foi realizada.
+        if (!resposta.ok || !resultado.sucesso) {
+            throw new Error(
+                resultado.erro || 'Não foi possível desativar a conta.'
+            );
+        }
+
+        // Redireciona imediatamente após a desativação.
+        window.location.replace(
+            'PaginaLogin/login.php?status=conta_desativada'
+        );
+
+        return;
+    } catch (erro) {
+
+        console.error('Erro ao desativar conta:', erro);
+
+        toast(erro.message);
+    }
+}
+
 // Renda mensal usada no saldo estimado: lucros lançados ou, sem lançamentos, o valor de demonstração.
 function monthlyIncome() {
     const totalLucros = income.fixo + income.variavel;
@@ -576,11 +754,11 @@ function head(title, sub, button = '') {
 }
 
 // Cartão de indicador/resumo.
-function stat(label, value, note, ico, negativo = false) {
+function stat(label, value, note, ico) {
     return `
     <div class="card">
         <div class="stat-label"><span>${ico}</span>${label}</div>
-        <div class="stat-value${negativo ? ' negative' : ''}">${value}</div>
+        <div class="stat-value">${value}</div>
         <div class="stat-note">${note}</div>
     </div>`;
 }
@@ -609,15 +787,6 @@ function iconFor(c) {
     })[c] || '◆';
 }
 
-// Texto da coluna "Parcelado": "12x de R$ 100,00" (valor dividido pelas parcelas, só para exibição).
-function installmentLabel(e) {
-    const n = parseInt(e.installments, 10);
-
-    return n > 0
-        ? esc(n + 'x de ' + money(Number(e.value) / n))
-        : esc(e.installments);
-}
-
 // Linhas da tabela de lançamentos, com ações de editar e excluir.
 function expenseRows(arr) {
     if (!arr.length) {
@@ -635,7 +804,7 @@ function expenseRows(arr) {
             <td>${money(e.value)}</td>
             <td>${prettyDate(e.date)}</td>
             <td>${esc(e.who)}</td>
-            <td><span class="tag tag-nowrap">${installmentLabel(e)}</span></td>
+            <td><span class="tag">${esc(e.installments)}</span></td>
             <td><span class="tag">${esc(e.payment)}</span></td>
             <td>${esc(e.category)}</td>
             <td class="actions">
@@ -782,7 +951,6 @@ function refreshExpenseTable() {
         .sort((a, b) => b.date.localeCompare(a.date));
 
     $('expenseTable').innerHTML = expenseTable(arr);
-    $('expenseStats').innerHTML = expenseStats(arr);
 }
 
 // Limpa os filtros e redesenha a tela de lançamentos.
@@ -814,7 +982,7 @@ function homePage() {
     <div class="grid stats">
         ${stat('Gastos registrados', money(sum), 'No período selecionado', '▥')}
         ${stat('Gastos do mês', money(monthSum), 'Este mês', '▤')}
-        ${stat('Saldo estimado', money(saldoMes().saldo), 'Lucros do mês − gastos − aportes em metas', '◉', saldoMes().saldo < 0)}
+        ${stat('Saldo estimado', money(saldoMes().saldo), 'Lucros do mês − gastos − aportes em metas', '◉')}
         ${stat('Lançamentos', pe.length, 'No período selecionado', '☷')}
     </div>
     <div class="grid two-col">
@@ -848,7 +1016,7 @@ function homePage() {
 }
 
 // Cards de lucro fixo e variável. Clicar em um deles abre o popup de edição.
-function incomeCards(extra = '') {
+function incomeCards() {
     const iconFixo = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>';
     const iconVar = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V11"/><path d="M12 21V4"/><path d="M19 21v-7"/></svg>';
 
@@ -864,32 +1032,10 @@ function incomeCards(extra = '') {
         </button>`;
 
     return `
-    <div class="income-row${extra ? ' with-extra' : ''}">
+    <div class="income-row">
         ${card('FIXA', 'Lucros Fixos', income.fixo, iconFixo)}
         ${card('VARIAVEL', 'Lucros Variáveis', income.variavel, iconVar)}
-        ${extra}
     </div>`;
-}
-
-// Cards de indicadores da tela de lançamentos (seguem os filtros aplicados).
-function expenseStats(arr) {
-    const totalFiltrado = total(arr);
-    const saldo = saldoMes().saldo;
-
-    // Forma de pagamento com maior gasto dentro do filtro.
-    const porPagamento = {};
-    arr.forEach(e => {
-        const nome = e.payment || 'Sem forma';
-        porPagamento[nome] = (porPagamento[nome] || 0) + Number(e.value || 0);
-    });
-    const topo = Object.entries(porPagamento).sort((a, b) => b[1] - a[1])[0];
-
-    return `
-        ${stat('Total filtrado', money(totalFiltrado), 'Soma dos lançamentos exibidos', '▥')}
-        ${stat('Quantidade', arr.length, 'Lançamentos encontrados', '☷')}
-        ${stat('Saldo estimado', money(saldo), 'Lucros do mês − gastos − aportes em metas', '◉', saldo < 0)}
-        ${stat('Maior gasto por forma', topo ? esc(topo[0]) : '—',
-            topo ? money(topo[1]) + ' · ' + Math.round(topo[1] / totalFiltrado * 100) + '% do total filtrado' : 'Sem lançamentos no filtro', '▦')}`;
 }
 
 // Tela de lançamentos, indicadores e controles de filtro.
@@ -904,7 +1050,12 @@ function expensesPage() {
         `<button class="btn primary" onclick="openExpense()">＋ Novo lançamento</button>`)}
     ${periodBar()}
     ${incomeCards()}
-    <div class="grid stats" id="expenseStats">${expenseStats(arr)}</div>
+    <div class="grid stats">
+        ${stat('Total filtrado', money(total(arr)), 'Soma dos lançamentos exibidos', '▥')}
+        ${stat('Quantidade', arr.length, 'Lançamentos encontrados', '☷')}
+        ${stat('Crédito', money(total(arr.filter(e => e.payment === 'Crédito'))), 'Compras no crédito', '▣')}
+        ${stat('Pix', money(total(arr.filter(e => e.payment === 'Pix'))), 'Pagamentos via Pix', '▦')}
+    </div>
     <div class="toolbar">
         <input class="field search" id="searchExpense" placeholder="⌕ Pesquisar por nome, gasto, categoria..." value="${esc(searchTerm)}">
         <select class="field" id="categoryFilter" data-dd-icon="🏷️">
@@ -1168,7 +1319,7 @@ function goalsPage() {
         'Metas',
         'Defina seus objetivos e acompanhe seu progresso.',
         `<button class="btn primary" onclick="openGoal()">＋ Criar nova meta</button>`)}
-    ${incomeCards(stat('Saldo estimado', money(saldoMes().saldo), 'Lucros do mês − gastos − aportes em metas', '◉', saldoMes().saldo < 0))}
+    ${incomeCards()}
     <div class="card">
         <h3 class="section-title">Minhas metas</h3>
         <p class="muted" style="font-size:11px;margin-top:-7px">Acompanhe o progresso das suas metas e mantenha o foco nos seus objetivos.</p>
@@ -1196,7 +1347,10 @@ function settingsPage() {
                     <div><strong>Excluir Metas</strong><small>Apaga todas as metas.</small></div>
                     <button type="button" onclick="deleteAllGoals()" class="btn btn-danger"> <i class="bi bi-trash"></i>Excluir metas </button>
                 </div>
-                
+                <div class="setting-row">
+                    <div><strong>Desativar Conta</strong><small>Desativa a conta, dados de lançamentos e metas serão mantidos.</small></div>
+                    <button type="button" class="btn btn-danger" onclick="deactivatemyaccount()"> Desativar minha conta </button>
+                </div>
             </div>
         </div>
         <div class="grid">
@@ -1384,11 +1538,7 @@ function openExpense(id = null) {
             f.elements.category.value = e.category;
             f.elements.payment.value = e.payment;
             f.elements.who.value = e.who;
-            // Parcelado chega como texto ("12x"); "Não" quando é à vista.
-            const parcelas = parseInt(e.installments, 10);
-
-            f.elements.installments.value = parcelas ? 'Sim' : 'Não';
-            f.elements.installment_count.value = parcelas || '';
+            f.elements.installments.value = e.installments;
         }
     }
 
