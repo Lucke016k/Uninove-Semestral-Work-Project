@@ -120,19 +120,37 @@ function addDaysISO(s, n) {
     return localISO(d);
 }
 
-// Meta salva no navegador: { limit, start, days }. Padrão: dia 1 do mês atual, 30 dias.
-let spendGoal = (function () {
+// Meta de gasto { limit, start, days }. Fica no banco (uma por usuário, api/metas/gasto_*.php).
+// Padrão enquanto o usuário não definiu a sua: dia 1 do mês atual, 30 dias.
+function defaultSpendGoal() {
     const hoje = new Date();
-    const padrao = {
+
+    return {
         limit: MONTHLY_LIMIT,
         start: localISO(new Date(hoje.getFullYear(), hoje.getMonth(), 1)),
         days: SPEND_GOAL_MAX_DAYS
     };
-    const g = load('cf_spend_goal', padrao);
-    const valida = g && Number(g.limit) > 0 && /^\d{4}-\d{2}-\d{2}$/.test(g.start || '')
-        && Number.isInteger(Number(g.days)) && g.days >= 1 && g.days <= SPEND_GOAL_MAX_DAYS;
-    return valida ? { limit: Number(g.limit), start: g.start, days: Number(g.days) } : padrao;
-})();
+}
+
+let spendGoal = defaultSpendGoal();
+
+// Carrega a meta de gasto do usuário logado.
+async function loadSpendGoalFromDatabase() {
+    try {
+        const resultado = await callApi('api/metas/gasto_obter.php');
+        const m = resultado.meta;
+
+        spendGoal = m
+            ? { limit: Number(m.limite), start: String(m.inicio).slice(0, 10), days: Number(m.dias) }
+            : defaultSpendGoal();
+
+        updateMini();
+        render();
+    } catch (erro) {
+        console.error('Erro ao carregar meta de gasto:', erro);
+        toast(erro.message);
+    }
+}
 
 // Soma os lançamentos dentro do período da meta e calcula o andamento.
 function spendGoalInfo() {
@@ -177,9 +195,12 @@ const PERIOD_PRESETS = {
     all: 'Todo o período'
 };
 
+// Chave do período no navegador, separada por conta para um usuário não herdar o filtro do outro.
+const PERIOD_KEY = 'cf_period:' + (user.email || '');
+
 // Período salvo no navegador: { preset } ou { preset: 'custom', start, end }.
 let period = (function () {
-    const p = load('cf_period', { preset: 'month' });
+    const p = load(PERIOD_KEY, { preset: 'month' });
     const data = /^\d{4}-\d{2}-\d{2}$/;
     const valido = p && (PERIOD_PRESETS[p.preset] ||
         (p.preset === 'custom' && data.test(p.start || '') && data.test(p.end || '') && p.start <= p.end));
@@ -343,7 +364,7 @@ $('periodForm').onsubmit = (e) => {
         period = { preset };
     }
 
-    localStorage.setItem('cf_period', JSON.stringify(period));
+    localStorage.setItem(PERIOD_KEY, JSON.stringify(period));
     closePeriod();
     render();
 };
@@ -1457,7 +1478,7 @@ document.addEventListener('keydown', (e) => {
 });
 $('spendGoalForm').addEventListener('input', spendGoalFormHint);
 
-$('spendGoalForm').onsubmit = (e) => {
+$('spendGoalForm').onsubmit = async (e) => {
     e.preventDefault();
 
     const f = e.currentTarget;
@@ -1477,13 +1498,28 @@ $('spendGoalForm').onsubmit = (e) => {
         return;
     }
 
-    spendGoal = { limit: limite, start: f.elements.start.value, days: dias };
-    localStorage.setItem('cf_spend_goal', JSON.stringify(spendGoal));
+    const botao = f.querySelector('button[type="submit"]');
+    botao.disabled = true;
 
-    closeSpendGoal();
-    updateMini();
-    render();
-    toast('Meta de gasto atualizada.');
+    try {
+        await callApi('api/metas/gasto_salvar.php', {
+            limit: limite.toFixed(2),
+            start: f.elements.start.value,
+            days: dias
+        });
+
+        spendGoal = { limit: limite, start: f.elements.start.value, days: dias };
+
+        closeSpendGoal();
+        updateMini();
+        render();
+        toast('Meta de gasto atualizada.');
+    } catch (erro) {
+        console.error('Erro ao salvar meta de gasto:', erro);
+        toast(erro.message);
+    } finally {
+        botao.disabled = false;
+    }
 };
 
 $('goalMini').addEventListener('keydown', (e) => {
@@ -2537,10 +2573,15 @@ $('incomeForm').onsubmit = async (e) => {
 // INICIALIZAÇÃO
 // ==========================================
 
+// Chaves antigas, compartilhadas entre contas no mesmo navegador.
+localStorage.removeItem('cf_spend_goal');
+localStorage.removeItem('cf_period');
+
 updateMini();
 render();
 
 loadUserFromSession();
+loadSpendGoalFromDatabase();
 loadCategoriesFromDatabase();
 loadExpensesFromDatabase();
 loadIncomeFromDatabase();
