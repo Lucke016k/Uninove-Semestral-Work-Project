@@ -5,7 +5,7 @@
  * Se mudar o tempo aqui, mude também em sessao.js.
  */
 
-const TEMPO_INATIVIDADE = 60; // 1 minuto, em segundos.
+const TEMPO_INATIVIDADE = 1800; // 30 minutos, em segundos.
 const DIAS_LEMBRAR = 30;
 
 function iniciarSessao(): void
