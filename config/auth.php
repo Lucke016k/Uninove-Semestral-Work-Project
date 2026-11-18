@@ -1,17 +1,30 @@
 <?php
 /**
- * Controle de sessão: encerra após 30 minutos sem atividade.
+ * Controle de sessão: encerra após 30 minutos sem atividade,
+ * exceto para quem marcou "Lembrar de mim" (sessão dura 30 dias).
  * Se mudar o tempo aqui, mude também em sessao.js.
  */
 
-const TEMPO_INATIVIDADE = 1800; // 30 minutos, em segundos.
+const TEMPO_INATIVIDADE = 60; // 1 minuto, em segundos.
+const DIAS_LEMBRAR = 30;
 
 function iniciarSessao(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
-        // Evita que o PHP apague o arquivo da sessão antes dos 30 minutos.
-        ini_set("session.gc_maxlifetime", (string) TEMPO_INATIVIDADE);
+        // O servidor guarda a sessão por 30 dias.
+        // A regra dos 30 minutos é aplicada em verificarSessao().
+        ini_set("session.gc_maxlifetime", (string) (DIAS_LEMBRAR * 86400));
         session_start();
+
+        // Quem marcou "Lembrar de mim" mantém o cookie por 30 dias.
+        if (!empty($_SESSION["lembrar"])) {
+            setcookie(session_name(), session_id(), [
+                "expires"  => time() + DIAS_LEMBRAR * 86400,
+                "path"     => "/",
+                "httponly" => true,
+                "samesite" => "Lax",
+            ]);
+        }
     }
 }
 
@@ -38,7 +51,9 @@ function verificarSessao(): string
 
     $agora = time();
 
-    if (isset($_SESSION["ultima_atividade"])
+    // Só expira por inatividade quem NÃO marcou "Lembrar de mim".
+    if (empty($_SESSION["lembrar"])
+        && isset($_SESSION["ultima_atividade"])
         && ($agora - $_SESSION["ultima_atividade"]) > TEMPO_INATIVIDADE) {
         encerrarSessao();
         return "expirada";

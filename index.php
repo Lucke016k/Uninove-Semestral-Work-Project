@@ -662,9 +662,10 @@ if (empty($_SESSION['csrf_token'])) {
 
 <script>
     window.USUARIO = <?= json_encode([
-        "nome"  => $_SESSION["usuario"]["nome"]  ?? "Usuário",
-        "email" => $_SESSION["usuario"]["email"] ?? ""
-    ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    "nome"    => $_SESSION["usuario"]["nome"]  ?? "Usuário",
+    "email"   => $_SESSION["usuario"]["email"] ?? "",
+    "lembrar" => !empty($_SESSION["lembrar"])
+], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>
     <script src="sessao.js"></script>
     <script src="dropdown.js"></script>
