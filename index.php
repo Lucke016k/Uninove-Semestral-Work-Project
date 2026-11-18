@@ -77,6 +77,8 @@ if (empty($_SESSION['csrf_token'])) {
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UniFinance</title>
     <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES,'UTF-8') ?>">
+    <script src="theme.js"></script>
+    <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="img/favicon.png">
 </head>
@@ -318,7 +320,7 @@ if (empty($_SESSION['csrf_token'])) {
                         <input name="target" type="number" min="1" step="0.01" required>
                     </div>
                     <div class="form-group full goal-saved-block">
-                        <h3 class="income-section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M12 7v10M7 12h10" stroke="#fffdf7" stroke-width="2.2" stroke-linecap="round"/></svg>Atualizar valor guardado</h3>
+                        <h3 class="income-section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M12 7v10M7 12h10" style="stroke:var(--panel)" stroke-width="2.2" stroke-linecap="round"/></svg>Atualizar valor guardado</h3>
                         <p class="income-help">Guardado atual: <strong id="goalEditCurrent">R$ 0,00</strong>. Some um valor ao atual ou substitua pelo novo valor.</p>
                         <div class="opt-grid">
                             <label class="opt-card">
@@ -562,7 +564,7 @@ if (empty($_SESSION['csrf_token'])) {
         <div class="modal modal-income" role="dialog" aria-modal="true" aria-labelledby="incomeTitle">
             <div class="modal-head income-head">
                 <div class="modal-title">
-                    <span class="income-bag"><svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path d="M9 2.5h6l-1.6 3.2h-2.8L9 2.5z" fill="currentColor"/><path d="M12 6.5c-4.2 0-7.2 3.7-7.2 8.2 0 3.4 2.3 6.3 7.2 6.3s7.2-2.9 7.2-6.3c0-4.5-3-8.2-7.2-8.2z" fill="currentColor"/><text x="12" y="18" text-anchor="middle" font-size="10" font-weight="700" fill="#e5eadd" font-family="Arial,sans-serif">$</text></svg></span>
+                    <span class="income-bag"><svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path d="M9 2.5h6l-1.6 3.2h-2.8L9 2.5z" fill="currentColor"/><path d="M12 6.5c-4.2 0-7.2 3.7-7.2 8.2 0 3.4 2.3 6.3 7.2 6.3s7.2-2.9 7.2-6.3c0-4.5-3-8.2-7.2-8.2z" fill="currentColor"/><text x="12" y="18" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--panel)" font-family="Arial,sans-serif">$</text></svg></span>
                     <div>
                         <h2 id="incomeTitle">Lucro</h2>
                         <small>Gerencie seu lucro fixo ou variável.</small>
@@ -587,7 +589,7 @@ if (empty($_SESSION['csrf_token'])) {
                 </div>
             </div>
             <form id="incomeForm">
-                <h3 class="income-section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M12 7v10M7 12h10" stroke="#fffdf7" stroke-width="2.2" stroke-linecap="round"/></svg>Lançar Novo Valor</h3>
+                <h3 class="income-section"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M12 7v10M7 12h10" style="stroke:var(--panel)" stroke-width="2.2" stroke-linecap="round"/></svg>Lançar Novo Valor</h3>
                 <p class="income-help">Adicione um valor ao seu lucro atual ou substitua pelo novo valor.</p>
                 <div class="opt-grid">
                     <label class="opt-card">

@@ -31,7 +31,7 @@
     content: "";
     position: fixed;
     border-radius: 50%;
-    background: #e2e9d9;
+    background: var(--mint, #e2e9d9);
     opacity: 0.55;
     z-index: 0;
     pointer-events: none;
@@ -71,8 +71,8 @@
     display: grid;
     place-items: center;
 
-    background: var(--green, #244f3b);
-    color: white;
+    background: var(--accent, #244f3b);
+    color: var(--on-accent, white);
     border-radius: 17px;
     font-size: 27px;
     font-weight: bold;
@@ -133,7 +133,7 @@
     padding: 13px 14px;
     border: 1px solid var(--line, #e5e4d8);
     border-radius: 9px;
-    background: #fff;
+    background: var(--input-bg, #fff);
     color: var(--text, #27392e);
     font-size: 14px;
     outline: none;
@@ -196,9 +196,9 @@
 .auth-button {
     width: 100%;
     padding: 14px;
-    background: var(--green, #244f3b);
-    border: 1px solid var(--green, #244f3b);
-    color: white;
+    background: var(--accent, #244f3b);
+    border: 1px solid var(--accent, #244f3b);
+    color: var(--on-accent, white);
     border-radius: 9px;
     font-size: 14px;
     font-weight: 700;
@@ -207,8 +207,8 @@
 }
 
 .auth-button:hover {
-    background: var(--green2, #52765e);
-    border-color: var(--green2, #52765e);
+    background: var(--accent2, #52765e);
+    border-color: var(--accent2, #52765e);
 }
 
 .auth-divider {
@@ -266,12 +266,12 @@
 }
 
 .auth-message.error {
-    background: #f9e9e5;
-    color: #a34332;
+    background: var(--red-soft, #f9e9e5);
+    color: var(--error-text, #a34332);
 }
 
 .auth-message.success {
-    background: #e2e9d9;
+    background: var(--mint, #e2e9d9);
     color: var(--green, #244f3b);
 }
 

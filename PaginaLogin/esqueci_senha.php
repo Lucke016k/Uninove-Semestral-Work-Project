@@ -13,6 +13,8 @@ unset($_SESSION["auth_error"]);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar senha - UniFinance</title>
 
+    <script src="../theme.js"></script>
+    <link rel="stylesheet" href="../theme.css">
     <link rel="stylesheet" href="./login.css">
     <link rel="icon" type="image/png" href="../img/favicon.png">
 </head>

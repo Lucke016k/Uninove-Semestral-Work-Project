@@ -28,6 +28,8 @@ if (isset($_GET["senha"]) && $_GET["senha"] === "alterada") {
     <title>Entrar - UniFinance</title>
 
     <!-- CSS principal do projeto -->
+    <script src="../theme.js"></script>
+    <link rel="stylesheet" href="../theme.css">
     <link rel="stylesheet" href="login.css">
     <link rel="icon" type="image/png" href="../img/favicon.png">
 </head>

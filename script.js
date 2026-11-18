@@ -1118,8 +1118,8 @@ function reportsPage() {
             <h3 class="section-title">Evolução financeira</h3>
             <canvas class="chart" id="lineChart"></canvas>
             <div class="chart-legend">
-                <span><i class="dot" style="background:#315f47"></i>Gastos</span>
-                <span><i class="dot" style="background:#a6b99e"></i>Limite estimado</span>
+                <span><i class="dot" style="background:var(--chart-line)"></i>Gastos</span>
+                <span><i class="dot" style="background:var(--chart-line-2)"></i>Limite estimado</span>
             </div>
         </div>
         <div class="card">
@@ -1172,6 +1172,11 @@ function aporteList(arr) {
 
 // Desenha os gráficos nos canvas usando os lançamentos em memória.
 // idx 0 = linha e idx 1 = barras; ambos usam faixas de datas do período escolhido.
+// Lê uma variável de cor do tema ativo (os gráficos usam canvas, que não enxerga o CSS sozinho).
+function cssVar(nome) {
+    return getComputedStyle(document.documentElement).getPropertyValue(nome).trim();
+}
+
 function drawCharts() {
     ['lineChart', 'barChart'].forEach((id, idx) => {
         const canvas = $(id);
@@ -1195,7 +1200,7 @@ function drawCharts() {
         // Linhas de grade.
         for (let i = 0; i < 4; i++) {
             const y = pad + (h - pad * 1.5) * i / 3;
-            ctx.strokeStyle = '#e8e9df';
+            ctx.strokeStyle = cssVar('--chart-grid');
             ctx.beginPath();
             ctx.moveTo(pad, y);
             ctx.lineTo(w - 8, y);
@@ -1217,7 +1222,7 @@ function drawCharts() {
         const yy = v => h - pad - (h - pad * 1.5) * v / max;
 
         const desenharRotulo = i => {
-            ctx.fillStyle = '#7d887b';
+            ctx.fillStyle = cssVar('--chart-text');
             ctx.font = '10px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(labels[i], xx(i), h - 5);
@@ -1228,7 +1233,7 @@ function drawCharts() {
             const bw = (w - pad - 12) / vals.length * 0.48;
 
             vals.forEach((v, i) => {
-                ctx.fillStyle = '#52765e';
+                ctx.fillStyle = cssVar('--accent2');
                 ctx.fillRect(xx(i) - bw / 2, yy(v), bw, h - pad - yy(v));
                 desenharRotulo(i);
             });
@@ -1236,14 +1241,14 @@ function drawCharts() {
             // Linha com pontos.
             ctx.beginPath();
             vals.forEach((v, i) => (i ? ctx.lineTo(xx(i), yy(v)) : ctx.moveTo(xx(i), yy(v))));
-            ctx.strokeStyle = '#315f47';
+            ctx.strokeStyle = cssVar('--chart-line');
             ctx.lineWidth = 2;
             ctx.stroke();
 
             vals.forEach((v, i) => {
                 ctx.beginPath();
                 ctx.arc(xx(i), yy(v), 3, 0, Math.PI * 2);
-                ctx.fillStyle = '#315f47';
+                ctx.fillStyle = cssVar('--chart-line');
                 ctx.fill();
                 desenharRotulo(i);
             });
@@ -1356,7 +1361,9 @@ function settingsPage() {
                 <h3 class="section-title">Preferências do sistema</h3>
                 <div class="setting-row">
                     <div><strong>Aparência</strong><small>Escolha o tema visual do aplicativo</small></div>
-                    <span class="tag">Bege + verde</span>
+                    <select class="field" id="themeSelect" data-dd-icon="🎨">
+                        ${Tema.lista.map(t => `<option value="${t.id}" data-icon="${t.icone}"${t.id === Tema.atual() ? ' selected' : ''}>${t.nome}</option>`).join('')}
+                    </select>
                 </div>
                 <div class="setting-row">
                     <div><strong>Excluir Lançamentos</strong><small>Apaga todos os seus lançamentos.</small></div>
@@ -1423,7 +1430,16 @@ function render() {
     if (page === 'reports') {
         drawCharts();
     }
+
+    if (page === 'settings') {
+        $('themeSelect').onchange = e => Tema.definir(e.target.value);
+    }
 }
+
+// Ao trocar de tema, os gráficos (canvas) precisam ser desenhados de novo com as novas cores.
+document.addEventListener('tema-alterado', () => {
+    if (page === 'reports') drawCharts();
+});
 
 // Atualiza a barra lateral com o gasto do mês e o limite mensal.
 function updateMini() {

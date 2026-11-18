@@ -1,14 +1,5 @@
-:root{
-    --bg:#f5f2e7;
-    --panel:#fffdf7;
-    --green:#244f3b;
-    --green2:#52765e;
-    --mint:#e2e9d9;
-    --text:#27392e;
-    --muted:#7d887b;
-    --line:#e5e4d8;
-    --red:#b65e4b;
-    --shadow:0 8px 24px #304b3510}*{box-sizing:border-box}
+/* As cores (variáveis) de cada tema ficam em theme.css. */
+*{box-sizing:border-box}
     body{
         margin:0;
         background:var(--bg);
@@ -26,7 +17,7 @@
         .sidebar{
             width:228px;
             padding:24px 15px;
-            background:#f8f6ed;
+            background:var(--sidebar);
             border-right:1px solid var(--line);
             display:flex;
             flex-direction:column;
@@ -38,8 +29,8 @@
             padding:0 8px
         }
         .brand-icon{
-            background:var(--green);
-            color:#fff;
+            background:var(--accent);
+            color:var(--on-accent);
             border-radius:10px;
             width:38px;
             height:38px;
@@ -59,7 +50,7 @@
             font-size:10px;
             text-transform:uppercase;
             letter-spacing:1.2px;
-            color:#9ba194;
+            color:var(--faint);
             padding:0 10px;
             margin:8px 0
         }
@@ -73,14 +64,14 @@
             text-align:left;
             padding:11px 12px;
             border-radius:9px;
-            color:#667568;
+            color:var(--text-2);
             display:flex;
             gap:12px;
             align-items:center;
             font-size:13px
         }
         .nav button.active,.nav button:hover{
-            background:#e2e8db;
+            background:var(--soft);
             color:var(--green);
             font-weight:650
         }
@@ -91,7 +82,7 @@
         }
         .goal-mini{
             margin-top:auto;
-            background:#fffdf7;
+            background:var(--panel);
             border:1px solid var(--line);
             padding:14px;border-radius:12px;
             font-size:11px}
@@ -101,13 +92,13 @@
             margin:8px 0}
         .progress{
             height:6px;
-            background:#e4e7dc;
+            background:var(--soft);
             border-radius:10px;
             overflow:hidden}
         .progress span{
             display:block;
             height:100%;
-            background:var(--green2);
+            background:var(--accent2);
             border-radius:10px
         }
         .goal-mini small{
@@ -131,16 +122,16 @@
         }
         .pill{
             border:1px solid var(--line);
-            background:#fffdf7;
+            background:var(--panel);
             padding:9px 12px;
             border-radius:9px;
             font-size:12px;
-            color:#637064
+            color:var(--text-2)
         }
         .avatar{
             width:27px;
             height:27px;
-            background:#e2e9d9;
+            background:var(--mint);
             border-radius:50%;
             display:inline-grid;
             place-items:center;
@@ -166,7 +157,7 @@
         }
         .btn{
             border:1px solid var(--line);
-            background:#fffdf7;
+            background:var(--panel);
             color:var(--green);
             padding:10px 14px;
             border-radius:9px;
@@ -174,9 +165,9 @@
             font-weight:650
         }
         .btn.primary{
-            background:var(--green);
-            border-color:var(--green);
-            color:white
+            background:var(--accent);
+            border-color:var(--accent);
+            color:var(--on-accent)
         }
         .btn.danger{
             color:var(--red)
@@ -227,7 +218,7 @@
         }
         .field{
             border:1px solid var(--line);
-            background:#fffdf7;
+            background:var(--input-bg);
             border-radius:8px;
             padding:10px 11px;
             color:var(--text);
@@ -240,8 +231,8 @@
         }
         .chip{
             border:1px solid var(--line);
-            background:#fffdf7;
-            color:#667568;
+            background:var(--panel);
+            color:var(--text-2);
             border-radius:20px;
             padding:8px 13px;
             font-size:11px
@@ -249,7 +240,7 @@
         .chip.active{
             background:var(--mint);
             color:var(--green);
-            border-color:#d2dccb;
+            border-color:var(--line-2);
             font-weight:700
         }
         .table-wrap{
@@ -262,7 +253,7 @@
         }
         th{
             text-align:left;
-            color:#849083;
+            color:var(--faint);
             font-weight:600;
             font-size:10px;
             padding:12px 10px;
@@ -271,7 +262,7 @@
         }
         td{
             padding:13px 10px;
-            border-bottom:1px solid #eeede5;
+            border-bottom:1px solid var(--line-soft);
             white-space:nowrap
         }
         tr:last-child td{
@@ -286,7 +277,7 @@
             width:30px;
             height:30px;
             border-radius:9px;
-            background:#e6ebdf;
+            background:var(--soft);
             color:var(--green);
             display:grid;
             place-items:center
@@ -295,8 +286,8 @@
             display:inline-block;
             padding:5px 8px;
             border-radius:6px;
-            background:#e7ecdf;
-            color:#47634c;
+            background:var(--soft);
+            color:var(--tag-text);
             font-size:10px
         }
         .muted{
@@ -305,7 +296,7 @@
         .actions button{
             border:0;
             background:none;
-            color:#748174;
+            color:var(--text-2);
             padding:4px 7px
         }
         .two-col{
@@ -351,14 +342,14 @@
         }
         .bar{
             height:8px;
-            background:#e8e9df;
+            background:var(--soft);
             border-radius:10px;
             overflow:hidden
         }
         .bar span{
             display:block;
             height:100%;
-            background:var(--green2);
+            background:var(--accent2);
             border-radius:10px
         }
         .payrow{
@@ -386,7 +377,7 @@
         }
         .form-group label{
             font-size:11px;
-            color:#69766a
+            color:var(--text-2)
         }
         .form-group input,
         .form-group select {
@@ -395,7 +386,7 @@
             padding: 11px;
             margin: 0;
             border: 1px solid var(--line);
-            background: #fffdf7;
+            background: var(--input-bg);
             border-radius: 8px;
             color: var(--text);
         }
@@ -405,7 +396,7 @@
         .modal-back{
             position:fixed;
             inset:0;
-            background:#1c302566;
+            background:var(--overlay);
             display:none;
             align-items:center;
             justify-content:center;
@@ -420,7 +411,7 @@
             background:var(--panel);
             border-radius:16px;
             padding:24px;
-            box-shadow:0 20px 70px #1b322c33
+            box-shadow:0 20px 70px var(--shadow-3)
         }
         .modal-head{
             display:flex;
@@ -492,8 +483,8 @@
         .goal-card .bigicon{
             width:48px;
             height:48px;
-            background:var(--green);
-            color:white;
+            background:var(--accent);
+            color:var(--on-accent);
             border-radius:13px;
             display:grid;
             place-items:center;
@@ -522,7 +513,7 @@
             border-radius:50%;
             display:grid;
             place-items:center;
-            background:#e5eadd
+            background:var(--soft)
         }
         .goal-line strong{
             font-size:12px
@@ -564,8 +555,8 @@
             width:48px;
             height:48px;
             margin:0 auto 12px;
-            background:var(--green);
-            color:#fff;
+            background:var(--accent);
+            color:var(--on-accent);
             border-radius:13px;
             font-size:24px
         }
@@ -604,8 +595,8 @@
             position:fixed;
             bottom:22px;
             right:22px;
-            background:var(--green);
-            color:#fff;
+            background:var(--accent);
+            color:var(--on-accent);
             padding:13px 18px;
             border-radius:10px;
             font-size:12px;
@@ -721,7 +712,7 @@
     border:1px solid transparent;
     border-radius:8px;
     background:none;
-    color:#748174;
+    color:var(--text-2);
     cursor:pointer;
     transition:background .15s,color .15s,border-color .15s
 }
@@ -730,8 +721,8 @@
     color:var(--green)
 }
 .actions .btn-icon.delete:hover{
-    background:#f6e3de;
-    border-color:#ecc9c0;
+    background:var(--red-soft);
+    border-color:var(--red-line);
     color:var(--red)
 }
 .actions .btn-icon:focus-visible{
@@ -783,7 +774,7 @@
     border-radius:50%;
     display:grid;
     place-items:center;
-    background:#e5eadd;
+    background:var(--soft);
     font-size:18px
 }
 .modal-edit .close{
@@ -808,14 +799,14 @@
     text-align:right
 }
 .modal-edit .form-group input:disabled{
-    background:#f1eee3;
+    background:var(--soft-2);
     color:var(--muted);
     cursor:not-allowed
 }
 .modal-edit .form-group input:focus{
     outline:none;
     border-color:var(--green);
-    box-shadow:0 0 0 3px #244f3b1f
+    box-shadow:0 0 0 3px var(--ring)
 }
 .modal-edit .modal-actions{
     padding-top:18px;
@@ -856,7 +847,7 @@
     border-radius:50%;
     display:grid;
     place-items:center;
-    background:#f6e3de;
+    background:var(--red-soft);
     color:var(--red)
 }
 .confirm-back.info .confirm-icon{
@@ -892,13 +883,13 @@
     cursor:pointer
 }
 .btn.btn-danger-solid{
-    background:var(--red);
-    border-color:var(--red);
-    color:#fff
+    background:var(--danger);
+    border-color:var(--danger);
+    color:var(--on-accent)
 }
 .confirm-back.info .btn-danger-solid{
-    background:var(--green);
-    border-color:var(--green)
+    background:var(--accent);
+    border-color:var(--accent)
 }
 .btn[hidden]{
     display:none
@@ -911,7 +902,7 @@
 #categoryModal .form-group input:focus{
     outline:none;
     border-color:var(--green);
-    box-shadow:0 0 0 3px #244f3b1f
+    box-shadow:0 0 0 3px var(--ring)
 }
 #categoryModal .btn,
 #categoryModal .close{
@@ -941,8 +932,8 @@
 }
 .income-card:hover{
     transform:translateY(-2px);
-    border-color:#c9d3bf;
-    box-shadow:0 12px 28px #304b3520
+    border-color:var(--line-2);
+    box-shadow:0 12px 28px var(--shadow-2)
 }
 .income-card:focus-visible{
     outline:2px solid var(--green);
@@ -955,8 +946,8 @@
     border-radius:12px;
     display:grid;
     place-items:center;
-    background:var(--green);
-    color:#fff
+    background:var(--accent);
+    color:var(--on-accent)
 }
 .income-info{
     display:grid;
@@ -1018,7 +1009,7 @@
     border-radius:50%;
     display:grid;
     place-items:center;
-    background:#e5eadd;
+    background:var(--soft);
     color:var(--green)
 }
 .income-summary{
@@ -1037,7 +1028,7 @@
 }
 .income-part{
     padding-left:20px;
-    border-left:1px solid #c7d1bd
+    border-left:1px solid var(--line-2)
 }
 .income-total span{
     font-size:14px;
@@ -1102,11 +1093,11 @@
     padding:14px;
     border:1px solid var(--line);
     border-radius:12px;
-    background:#fffdf7;
+    background:var(--panel);
     transition:background .15s,border-color .15s
 }
 .opt-card:hover .opt-box{
-    border-color:#c9d3bf
+    border-color:var(--line-2)
 }
 .opt-card input:checked + .opt-box{
     background:var(--mint);
@@ -1122,9 +1113,9 @@
     width:20px;
     height:20px;
     flex:none;
-    border:2px solid #b9c3b0;
+    border:2px solid var(--line-3);
     border-radius:50%;
-    background:#fffdf7;
+    background:var(--panel);
     display:grid;
     place-items:center
 }
@@ -1136,7 +1127,7 @@
     width:10px;
     height:10px;
     border-radius:50%;
-    background:var(--green)
+    background:var(--accent)
 }
 .opt-ico{
     color:var(--green);
@@ -1168,12 +1159,12 @@
     display:flex;
     border:1px solid var(--line);
     border-radius:10px;
-    background:#fffdf7;
+    background:var(--input-bg);
     overflow:hidden
 }
 .money-input:focus-within{
     border-color:var(--green);
-    box-shadow:0 0 0 3px #244f3b1f
+    box-shadow:0 0 0 3px var(--ring)
 }
 .money-input span{
     display:grid;
@@ -1200,7 +1191,7 @@
     padding:3px;
     border:1px solid var(--line);
     border-radius:10px;
-    background:#fffdf7
+    background:var(--panel)
 }
 .seg label{
     position:relative;
@@ -1220,8 +1211,8 @@
     transition:background .15s,color .15s
 }
 .seg input:checked + span{
-    background:var(--green);
-    color:#fff
+    background:var(--accent);
+    color:var(--on-accent)
 }
 .income-hint{
     margin:-6px 0 0;
@@ -1266,7 +1257,7 @@
         grid-column:1/-1;
         padding-bottom:14px;
         margin-bottom:14px;
-        border-bottom:1px solid #c7d1bd
+        border-bottom:1px solid var(--line-2)
     }
     .income-part:nth-of-type(2){
         border-left:0;
@@ -1305,13 +1296,13 @@
 .dd-native{display:none!important}
 .dd-trigger{
     width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;
-    padding:11px 12px;border:1px solid var(--line);background:#fffdf7;color:var(--text);
+    padding:11px 12px;border:1px solid var(--line);background:var(--input-bg);color:var(--text);
     border-radius:12px;text-align:left;font:inherit;cursor:pointer;
     transition:border-color .15s,box-shadow .15s
 }
 .dd-trigger.field{padding:10px 11px;font-size:12px;border-radius:12px}
-.dd-trigger:hover{border-color:#cfd3c2}
-.dd-trigger:focus-visible,.dd.open .dd-trigger{outline:0;border-color:var(--green);box-shadow:0 0 0 2px #244f3b1f}
+.dd-trigger:hover{border-color:var(--line-2)}
+.dd-trigger:focus-visible,.dd.open .dd-trigger{outline:0;border-color:var(--green);box-shadow:0 0 0 2px var(--ring)}
 .dd-trigger:disabled{opacity:.6;cursor:not-allowed}
 .dd-row{display:flex;align-items:center;gap:9px;min-width:0}
 .dd-ico{width:20px;text-align:center;font-size:15px;line-height:1;flex-shrink:0;color:var(--green)}
@@ -1321,13 +1312,13 @@
 .dd-list{
     position:fixed;z-index:1000;overflow-y:auto;padding:4px;
     background:var(--panel);border:1px solid var(--line);border-radius:12px;
-    box-shadow:0 12px 32px #1b322c33;font-size:13px
+    box-shadow:0 12px 32px var(--shadow-3);font-size:13px
 }
 .dd-list[hidden]{display:none}
 .dd-item{padding:8px 10px;border-radius:8px;color:var(--text);cursor:pointer}
 .dd-item.active{background:var(--mint)}
-.dd-item.selected,.dd-item.selected.active{background:var(--green);color:#fff}
-.dd-item.selected .dd-ico{color:#fff}
+.dd-item.selected,.dd-item.selected.active{background:var(--accent);color:var(--on-accent)}
+.dd-item.selected .dd-ico{color:var(--on-accent)}
 .dd-item .dd-text{white-space:nowrap}
 
 /* Edição do valor guardado da meta (adicionar / substituir) */
@@ -1339,7 +1330,7 @@
 .confirm-back.neutral .confirm-icon{background:var(--mint);color:var(--green)}
 .confirm-back.neutral .confirm-icon svg{display:none}
 .confirm-back.neutral .confirm-icon::before{content:"?";font-size:26px;font-weight:700}
-.confirm-back.neutral .btn-danger-solid{background:var(--green);border-color:var(--green)}
+.confirm-back.neutral .btn-danger-solid{background:var(--accent);border-color:var(--accent)}
 .confirm-back.neutral .modal-confirm .btn{min-width:150px}
 
 /* Popup de edição do nome da conta */
@@ -1348,13 +1339,13 @@
 
 /* Meta de gasto (barra lateral) */
 .goal-mini{cursor:pointer;transition:border-color .15s,box-shadow .15s}
-.goal-mini:hover,.goal-mini:focus-visible{outline:0;border-color:var(--green2);box-shadow:0 0 0 2px #244f3b1f}
+.goal-mini:hover,.goal-mini:focus-visible{outline:0;border-color:var(--green2);box-shadow:0 0 0 2px var(--ring)}
 .goal-mini-head{display:flex;justify-content:space-between;align-items:center}
 .goal-mini-head em{font-style:normal;font-size:10px;color:var(--green2);opacity:0;transition:opacity .15s}
 .goal-mini:hover .goal-mini-head em,.goal-mini:focus-visible .goal-mini-head em{opacity:1}
 .goal-mini #mini-period{margin-top:4px}
-.progress span.warn{background:#c89b3c}
-.progress span.over{background:var(--red)}
+.progress span.warn{background:var(--warn)}
+.progress span.over{background:var(--danger)}
 .progress span{transition:width .3s ease}
 .form-grid .full-col{grid-column:1/-1;margin:0}
 
@@ -1368,7 +1359,7 @@
     background:var(--panel);border:1px solid var(--line);border-radius:14px;color:var(--text);
     font:inherit;font-size:13px;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s
 }
-.period-btn:hover,.period-btn:focus-visible{outline:0;border-color:var(--green2);box-shadow:0 0 0 2px #244f3b1f}
+.period-btn:hover,.period-btn:focus-visible{outline:0;border-color:var(--green2);box-shadow:0 0 0 2px var(--ring)}
 .period-ico{font-size:16px;line-height:1}
 .period-text{flex:1;min-width:0}
 .period-text strong{color:var(--green)}
@@ -1383,7 +1374,7 @@
 .opt-card input:disabled + .opt-box:hover{border-color:var(--line)}
 #aporteForm .opt-grid{margin:6px 0 12px}
 .tag-nowrap{white-space:nowrap}
-.stat-value.negative{color:#c0392b}
+.stat-value.negative{color:var(--neg)}
 
 /* Linha de lucros com um terceiro card (saldo estimado na tela de metas) */
 .income-row.with-extra{grid-template-columns:repeat(3,minmax(0,1fr))}

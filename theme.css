@@ -1,0 +1,177 @@
+/*
+ * TEMAS DO SISTEMA
+ *
+ * Todas as cores do site vêm destas variáveis. O tema ativo é escolhido pelo atributo
+ * data-theme no <html> (theme.js), e o usuário troca em Configurações → Aparência.
+ *
+ *   (sem atributo) / "claro"  → bege + verde (padrão)
+ *   "escuro"                  → escuro verde
+ *   "roxo"                    → escuro roxo
+ *
+ * Variáveis principais:
+ *   --bg / --sidebar / --panel / --input-bg    fundos (página, menu lateral, cards, campos)
+ *   --text / --text-2 / --muted / --faint      textos, do mais forte ao mais suave
+ *   --line, --line-soft, --line-2, --line-3    bordas, da mais suave à mais forte
+ *   --green / --green2                         cor de destaque usada em TEXTOS e ícones
+ *   --accent / --accent2 / --on-accent         preenchimento de botões e barras (e o texto sobre eles)
+ *   --mint / --soft / --soft-2                 fundos de destaque suaves (hover, selecionado, ícones)
+ *   --red / --danger / --red-soft / --red-line cores de alerta e exclusão
+ */
+
+:root,
+:root[data-theme="claro"]{
+    color-scheme: light;
+    --bg:#f5f2e7;
+    --sidebar:#f8f6ed;
+    --panel:#fffdf7;
+    --input-bg:#fffdf7;
+
+    --text:#27392e;
+    --text-2:#667568;
+    --muted:#7d887b;
+    --faint:#849083;
+
+    --line:#e5e4d8;
+    --line-soft:#eeede5;
+    --line-2:#d2dccb;
+    --line-3:#b9c3b0;
+
+    --green:#244f3b;
+    --green2:#52765e;
+    --accent:#244f3b;
+    --accent2:#52765e;
+    --on-accent:#ffffff;
+
+    --mint:#e2e9d9;
+    --soft:#e5eadd;
+    --soft-2:#f1eee3;
+    --tag-text:#47634c;
+
+    --red:#b65e4b;
+    --danger:#b65e4b;
+    --red-soft:#f6e3de;
+    --red-line:#ecc9c0;
+    --neg:#c0392b;
+    --warn:#c89b3c;
+    --error-text:#a34332;
+
+    --chart-line:#315f47;
+    --chart-line-2:#a6b99e;
+    --chart-grid:#e8e9df;
+    --chart-text:#7d887b;
+    --chart-dot:#52765e;
+
+    --shadow:0 8px 24px #304b3510;
+    --shadow-2:#304b3520;
+    --shadow-3:#1b322c33;
+    --overlay:#1c302566;
+    --ring:#244f3b1f;
+}
+
+/* ---------- Escuro verde ---------- */
+:root[data-theme="escuro"]{
+    color-scheme: dark;
+    --bg:#131913;
+    --sidebar:#171e16;
+    --panel:#1e271c;
+    --input-bg:#161d14;
+
+    --text:#e5ece0;
+    --text-2:#b0bcab;
+    --muted:#8f9b8b;
+    --faint:#76826f;
+
+    --line:#2c372a;
+    --line-soft:#263122;
+    --line-2:#374434;
+    --line-3:#4a5a46;
+
+    --green:#93c7a2;
+    --green2:#74ae87;
+    --accent:#3f7352;
+    --accent2:#508a63;
+    --on-accent:#f3f8f0;
+
+    --mint:#27372a;
+    --soft:#283526;
+    --soft-2:#202a1e;
+    --tag-text:#b9cfbc;
+
+    --red:#e08a78;
+    --danger:#b9473b;
+    --red-soft:#3a2420;
+    --red-line:#5c3a33;
+    --neg:#f0796a;
+    --warn:#dcb050;
+    --error-text:#f4a596;
+
+    --chart-line:#7fbf92;
+    --chart-line-2:#496a52;
+    --chart-grid:#2b362a;
+    --chart-text:#8f9b8b;
+    --chart-dot:#93c7a2;
+
+    --shadow:0 8px 24px #00000055;
+    --shadow-2:#00000066;
+    --shadow-3:#000000aa;
+    --overlay:#050805b3;
+    --ring:#93c7a233;
+}
+
+/* ---------- Escuro roxo ---------- */
+:root[data-theme="roxo"]{
+    color-scheme: dark;
+    --bg:#0d0920;
+    --sidebar:#110b27;
+    --panel:#18113a;
+    --input-bg:#120c2b;
+
+    --text:#ece8fc;
+    --text-2:#b6aedb;
+    --muted:#9b92c4;
+    --faint:#7f76ac;
+
+    --line:#2e2558;
+    --line-soft:#261e4b;
+    --line-2:#3c3170;
+    --line-3:#52438f;
+
+    --green:#bba6ff;
+    --green2:#a089f6;
+    --accent:#6a3fe6;
+    --accent2:#7d54ee;
+    --on-accent:#ffffff;
+
+    --mint:#2a2058;
+    --soft:#2b2260;
+    --soft-2:#1f1848;
+    --tag-text:#cfc3ff;
+
+    --red:#f08aa0;
+    --danger:#c23a5a;
+    --red-soft:#3b1a30;
+    --red-line:#5f2a49;
+    --neg:#ff7d93;
+    --warn:#f2bb4c;
+    --error-text:#ffa3b4;
+
+    --chart-line:#a78bfa;
+    --chart-line-2:#5b4a9c;
+    --chart-grid:#2a2252;
+    --chart-text:#9b92c4;
+    --chart-dot:#bba6ff;
+
+    --shadow:0 8px 24px #00000066;
+    --shadow-2:#00000077;
+    --shadow-3:#000000bb;
+    --overlay:#06031299;
+    --ring:#bba6ff33;
+}
+
+/* Troca de tema suave (só depois da página carregar, para não "piscar" ao abrir). */
+html.tema-pronto body,
+html.tema-pronto .sidebar,
+html.tema-pronto .card,
+html.tema-pronto .modal{
+    transition:background-color .25s ease,color .25s ease,border-color .25s ease;
+}
