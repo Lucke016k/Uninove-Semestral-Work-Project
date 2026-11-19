@@ -223,7 +223,7 @@ if (empty($_SESSION['csrf_token'])) {
                             <option>Ticket</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="installmentsGroup">
                         <label>Parcelado?</label>
                         <select name="installments">
                             <option value="Não">Não</option>
@@ -272,8 +272,8 @@ if (empty($_SESSION['csrf_token'])) {
                         <label>Ícone</label>
                         <select name="icon">
                             <option value="✈️" data-icon="✈️">Viagem</option>
-                            <option value="🏠" data-icon="🏠">Casa</option>
-                            <option value="🚗" data-icon="🚗">Carro</option>
+                            <option value="🏠" data-icon="🏠">Imóvel</option>
+                            <option value="🚗" data-icon="🚗">Automóvel</option>
                             <option value="🎓" data-icon="🎓">Estudos</option>
                             <option value="💍" data-icon="💍">Casamento</option>
                             <option value="📱" data-icon="📱">Eletrônicos</option>
@@ -353,8 +353,8 @@ if (empty($_SESSION['csrf_token'])) {
                         <label>Ícone</label>
                         <select name="icon">
                             <option value="✈️" data-icon="✈️">Viagem</option>
-                            <option value="🏠" data-icon="🏠">Casa</option>
-                            <option value="🚗" data-icon="🚗">Carro</option>
+                            <option value="🏠" data-icon="🏠">Imóvel</option>
+                            <option value="🚗" data-icon="🚗">Automóvel</option>
                             <option value="🎓" data-icon="🎓">Estudos</option>
                             <option value="💍" data-icon="💍">Casamento</option>
                             <option value="📱" data-icon="📱">Eletrônicos</option>

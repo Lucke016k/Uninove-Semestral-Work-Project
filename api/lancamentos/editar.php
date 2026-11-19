@@ -104,6 +104,14 @@ if (
 $observacao = null;
 
 if ($parcelado === 'Sim') {
+    // Débito, VR, VA e Ticket não permitem parcelamento.
+    if (in_array($pagamento, ['Débito', 'VR', 'VA', 'Ticket'], true)) {
+        responder(400, [
+            'sucesso' => false,
+            'erro' => 'Esta forma de pagamento não permite parcelamento.'
+        ]);
+    }
+
     $qtdParcelas = filter_var(
         $_POST['installment_count'] ?? null,
         FILTER_VALIDATE_INT,

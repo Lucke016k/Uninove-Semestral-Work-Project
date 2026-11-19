@@ -775,11 +775,11 @@ function head(title, sub, button = '') {
 }
 
 // Cartão de indicador/resumo.
-function stat(label, value, note, ico) {
+function stat(label, value, note, ico, negativo = false) {
     return `
     <div class="card">
         <div class="stat-label"><span>${ico}</span>${label}</div>
-        <div class="stat-value">${value}</div>
+        <div class="stat-value${negativo ? ' negative' : ''}">${value}</div>
         <div class="stat-note">${note}</div>
     </div>`;
 }
@@ -1001,7 +1001,7 @@ function homePage() {
     <div class="grid stats">
         ${stat('Gastos registrados', money(sum), 'No período selecionado', '▥')}
         ${stat('Gastos do mês', money(monthSum), 'Este mês', '▤')}
-        ${stat('Saldo estimado', money(saldoMes().saldo), 'Lucros do mês − gastos − aportes em metas', '◉')}
+        ${stat('Saldo estimado', money(saldoMes().saldo), 'Lucros do mês − gastos − aportes em metas', '◉', saldoMes().saldo < 0)}
         ${stat('Lançamentos', pe.length, 'No período selecionado', '☷')}
     </div>
     <div class="grid two-col">
@@ -1069,11 +1069,10 @@ function expensesPage() {
         `<button class="btn primary" onclick="openExpense()">＋ Novo lançamento</button>`)}
     ${periodBar()}
     ${incomeCards()}
-    <div class="grid stats">
+    <div class="grid stats stats-3">
         ${stat('Total filtrado', money(total(arr)), 'Soma dos lançamentos exibidos', '▥')}
         ${stat('Quantidade', arr.length, 'Lançamentos encontrados', '☷')}
-        ${stat('Crédito', money(total(arr.filter(e => e.payment === 'Crédito'))), 'Compras no crédito', '▣')}
-        ${stat('Pix', money(total(arr.filter(e => e.payment === 'Pix'))), 'Pagamentos via Pix', '▦')}
+        ${stat('Saldo estimado', money(saldoMes().saldo), 'Lucros do mês − gastos − aportes em metas', '◉', saldoMes().saldo < 0)}
     </div>
     <div class="toolbar">
         <input class="field search" id="searchExpense" placeholder="⌕ Pesquisar por nome, gasto, categoria..." value="${esc(searchTerm)}">
@@ -1586,7 +1585,11 @@ function openExpense(id = null) {
             f.elements.date.value = e.date;
             f.elements.category.value = e.category;
             f.elements.payment.value = e.payment;
-            f.elements.installments.value = e.installments;
+            // Parcelado chega como texto ("12x"); "Não" quando é à vista.
+            const parcelas = parseInt(e.installments, 10);
+
+            f.elements.installments.value = parcelas ? 'Sim' : 'Não';
+            f.elements.installment_count.value = parcelas || '';
         }
     }
 
@@ -1604,8 +1607,16 @@ $('closeModal').onclick = $('cancelModal').onclick = () => $('modalBack').classL
 
 // Cadastra ou edita o lançamento enviando o formulário ao PHP.
 // Mostra o campo "Quantidade de parcelas" só quando "Parcelado?" = Sim.
+const NO_INSTALLMENT_PAYMENTS = ['Débito', 'VR', 'VA', 'Ticket'];
+
 function updateInstallmentField() {
     const f = $('expenseForm');
+    const permite = !NO_INSTALLMENT_PAYMENTS.includes(f.elements.payment.value);
+
+    // Nessas formas de pagamento o campo "Parcelado?" some e o lançamento fica à vista.
+    $('installmentsGroup').hidden = !permite;
+    if (!permite) f.elements.installments.value = 'Não';
+
     const parcelado = f.elements.installments.value === 'Sim';
     const campo = f.elements.installment_count;
 
@@ -1628,6 +1639,9 @@ function updateInstallmentField() {
 }
 
 $('expenseForm').addEventListener('change', e => {
+    if (e.target.name === 'payment') {
+        updateInstallmentField();
+    }
     if (e.target.name === 'installments') {
         updateInstallmentField();
         if (e.target.value === 'Sim') $('expenseForm').elements.installment_count.focus();
