@@ -788,6 +788,15 @@ function iconFor(c) {
     })[c] || '◆';
 }
 
+// Texto da coluna "Parcelado": "10x de R$ 120,00" (valor dividido pelas parcelas, só para exibição).
+function installmentLabel(e) {
+    const n = parseInt(e.installments, 10);
+
+    return n > 0
+        ? esc(n + 'x de ' + money(Number(e.value) / n))
+        : esc(e.installments);
+}
+
 // Linhas da tabela de lançamentos, com ações de editar e excluir.
 function expenseRows(arr) {
     if (!arr.length) {
@@ -804,7 +813,7 @@ function expenseRows(arr) {
             </td>
             <td>${money(e.value)}</td>
             <td>${prettyDate(e.date)}</td>
-            <td><span class="tag">${esc(e.installments)}</span></td>
+            <td><span class="tag tag-nowrap">${installmentLabel(e)}</span></td>
             <td><span class="tag">${esc(e.payment)}</span></td>
             <td>${esc(e.category)}</td>
             <td class="actions">
