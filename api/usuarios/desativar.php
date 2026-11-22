@@ -1,7 +1,8 @@
 <?php
 
-// Inicia a sessão.
-session_start();
+// Confere a sessão (inatividade de 30 min e "Lembrar de mim").
+require_once __DIR__ . '/../../config/auth.php';
+exigirLoginApi();
 
 // Define o formato da resposta.
 header('Content-Type: application/json; charset=utf-8');

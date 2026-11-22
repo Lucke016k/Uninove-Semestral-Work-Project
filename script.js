@@ -1,29 +1,21 @@
 /*
- * CONTROLE FINANCEIRO | JavaScript da interface
+ * UNIFINANCE | JavaScript da interface
  *
- * Lançamentos e categorias vêm do MySQL por meio da API PHP (pasta api/).
- * Metas e perfil ainda ficam no localStorage do navegador (protótipo).
+ * Lançamentos, categorias, lucros, metas, aportes, meta de gasto e perfil vêm do MySQL
+ * por meio da API PHP (pasta api/). No navegador ficam só preferências: o período do
+ * filtro (cf_period:<e-mail>) e o tema (cf_theme, em theme.js).
  * Nunca coloque credenciais do MySQL neste arquivo.
  */
 
 // ==========================================
-// CONSTANTES (valores de demonstração)
+// CONSTANTES
 // ==========================================
 
-// Limite mensal de gastos e renda mensal usados nos cartões e na barra lateral.
+// Limite de gastos padrão da meta de gasto, até o usuário definir o dele.
 const MONTHLY_LIMIT = 3500;
-const MONTHLY_INCOME = 4500;
 
 // Formas de pagamento exibidas na interface (os nomes são mapeados para o banco no PHP).
 const PAYMENT_METHODS = ['Crédito', 'Débito', 'Pix', 'Dinheiro', 'VR', 'VA', 'Ticket'];
-
-// Metas de exemplo. Na versão conectada, virão da tabela meta.
-const defaultGoals = [
-    { id: 1, name: 'Viagem dos Sonhos', icon: '✈️', target: 5000,  saved: 3000,  due: '2027-01-10' },
-    { id: 2, name: 'Entrada do Apê',    icon: '🏠', target: 35000, saved: 12250, due: '2028-06-30' },
-    { id: 3, name: 'Carro Novo',        icon: '🚗', target: 12000, saved: 2400,  due: '2027-10-10' },
-    { id: 4, name: 'Pós-Graduação',     icon: '🎓', target: 20000, saved: 2000,  due: '2028-08-01' }
-];
 
 // ==========================================
 // ESTADO
@@ -60,11 +52,6 @@ function load(chave, padrao) {
     } catch (erro) {
         return JSON.parse(JSON.stringify(padrao));
     }
-}
-
-// Salva metas e perfil no localStorage.
-function save() {
-    localStorage.setItem('cf_user', JSON.stringify(user));
 }
 
 // Formata números como valores monetários em Real brasileiro.
@@ -728,13 +715,6 @@ async function deactivatemyaccount() {
     }
 }
 
-// Renda mensal usada no saldo estimado: lucros lançados ou, sem lançamentos, o valor de demonstração.
-function monthlyIncome() {
-    const totalLucros = income.fixo + income.variavel;
-
-    return totalLucros > 0 ? totalLucros : MONTHLY_INCOME;
-}
-
 // Carrega os aportes feitos em metas (valores que saíram do saldo).
 async function loadAportesFromDatabase() {
     try {
@@ -1394,7 +1374,7 @@ function settingsPage() {
             </div>
             <div class="card">
                 <h3 class="section-title">Sessão</h3>
-                <p class="muted" style="font-size:12px">Você está usando o protótipo local do Controle Financeiro.</p>
+                <p class="muted" style="font-size:12px">Conectado como ${esc(user.email || user.name)}.</p>
                 <button class="btn danger" onclick="window.location.href='PaginaLogin/logout.php'">Sair da conta</button>
             </div>
         </div>
@@ -2462,7 +2442,6 @@ $('profileForm').onsubmit = async (e) => {
         };
 
         $('userLabel').textContent = user.name;
-        save();
         closeProfile();
         render();
         toast('Nome da conta atualizado.');
@@ -2473,25 +2452,6 @@ $('profileForm').onsubmit = async (e) => {
         botao.disabled = false;
     }
 };
-
-// Apaga as metas e o perfil salvos no navegador. Não apaga dados do MySQL.
-function clearData() {
-    if (confirm('Isso apagará as metas e o perfil salvos neste navegador. Deseja continuar?')) {
-        localStorage.removeItem('cf_goals');
-        localStorage.removeItem('cf_user');
-        goals = [];
-        user = {
-    name: (window.USUARIO && window.USUARIO.nome) || 'Usuário',
-    email: (window.USUARIO && window.USUARIO.email) || ''
-};
-        $('userLabel').textContent = user.name;
-        render();
-        toast('Dados locais apagados.');
-    }
-}
-
-
-
 
 $('userPill').onclick = () => setPage('settings');
 window.addEventListener('resize', () => {

@@ -21,9 +21,7 @@
         'Alimentação': '🍔', 'Supermercado': '🛒', 'Vestuário': '👕', 'Lazer': '🎮',
         'Transporte': '🚌', 'Moradia': '🏠', 'Saúde': '💊', 'Outros': '📦',
         // Filtros
-        'Todas as categorias': '🗂️', 'Todos os períodos': '📅',
-        // Período dos relatórios
-        'Mensal': '📅', 'Semanal': '🗓️', 'Diário': '☀️', 'Anual': '📆'
+        'Todas as categorias': '🗂️'
     };
 
     const valorDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');

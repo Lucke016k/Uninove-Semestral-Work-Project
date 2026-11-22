@@ -63,20 +63,6 @@
     margin-bottom: 25px;
 }
 
-.auth-brand-icon {
-    width: 58px;
-    height: 58px;
-    margin: 0 auto 12px;
-
-    display: grid;
-    place-items: center;
-
-    background: var(--accent, #244f3b);
-    color: var(--on-accent, white);
-    border-radius: 17px;
-    font-size: 27px;
-    font-weight: bold;
-}
 
 .auth-brand h1 {
     color: var(--green, #244f3b);

@@ -20,6 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 require_once __DIR__ . "/../../config/conexao.php";
+require_once __DIR__ . '/../../includes/verificar_usuario_ativo.php';
 
 $idUsuario = $_SESSION["usuario"]["id"];
 $nome      = trim($_POST["name"] ?? "");

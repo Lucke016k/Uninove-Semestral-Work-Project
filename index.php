@@ -171,7 +171,7 @@ if (empty($_SESSION['csrf_token'])) {
         <!-- Conteúdo principal; o JavaScript injeta aqui a tela selecionada. -->
         <main class="main">
             <div class="topbar">
-                <button class="pill" id="datePill">▦ 
+                <button class="pill">▦ 
                     <span id="today"></span>
                 </button>
                 <button class="pill" id="userPill">
@@ -549,7 +549,7 @@ if (empty($_SESSION['csrf_token'])) {
     <!-- Popup de confirmação (usado para excluir metas, lançamentos e categorias). -->
     <div class="modal-back confirm-back" id="confirmModalBack">
         <div class="modal modal-confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmText">
-            <div class="confirm-icon" id="confirmIcon"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></div>
+            <div class="confirm-icon"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></div>
             <h2 id="confirmTitle">Excluir item?</h2>
             <p id="confirmText"></p>
             <input type="text" id="confirmInput" class="field" placeholder="Digite desativar conta" autocomplete="off" style="display: none; width: 100%; margin-top: 12px;">
@@ -614,7 +614,7 @@ if (empty($_SESSION['csrf_token'])) {
                         <label class="income-label-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>Valor *</label>
                         <div class="money-input">
                             <span>R$</span>
-                            <input name="valor" id="incomeValue" inputmode="decimal" autocomplete="off" placeholder="Ex: 1.000,00" required>
+                            <input name="valor" inputmode="decimal" autocomplete="off" placeholder="Ex: 1.000,00" required>
                         </div>
                     </div>
                     <div class="form-group">
@@ -637,26 +637,6 @@ if (empty($_SESSION['csrf_token'])) {
                     <button class="btn primary" type="submit"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Salvar</button>
                 </div>
             </form>
-        </div>
-    </div>
-    <!-- Tela visual de login. O login atual é apenas demonstrativo e será substituído por autenticação PHP. -->
-    <div class="login-page" id="loginPage">
-        <div class="login-box">
-            <div class="login-logo">▣</div>
-            <h2>UniFinance</h2>
-            <p>Seus gastos, seus objetivos.</p>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>E-mail</label>
-                    <input name="email" type="email" placeholder="Digite seu e-mail" required>
-                </div>
-                <div class="form-group">
-                    <label>Senha</label>
-                    <input name="password" type="password" placeholder="Digite sua senha" required>
-                </div>
-                <button class="btn primary">Entrar</button>
-            </form>
-            <div class="notice">Protótipo local: qualquer e-mail e senha permitem entrar.</div>
         </div>
     </div>
     <!-- Mensagens temporárias de sucesso/erro exibidas pelo JavaScript. -->

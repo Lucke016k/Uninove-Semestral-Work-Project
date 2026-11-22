@@ -4,11 +4,13 @@
 ini_set('display_errors', '0');
 ob_start();
 
-session_start();
+require_once __DIR__ . '/../../config/auth.php';
+exigirLoginApi();
 
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../../config/conexao.php';
+require_once __DIR__ . '/../../includes/verificar_usuario_ativo.php';
 
 function responder($status, $dados)
 {
