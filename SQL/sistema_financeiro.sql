@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 18/11/2026 às 02:27
+-- Tempo de geração: 21/11/2026 às 17:36
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -37,6 +37,11 @@ CREATE TABLE `aporte_meta` (
   `CRIADO_EM` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `categoria`
+--
 
 CREATE TABLE `categoria` (
   `ID_CATEGORIA` bigint(20) UNSIGNED NOT NULL,
@@ -47,6 +52,12 @@ CREATE TABLE `categoria` (
   `CRIADO_EM` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `forma_pagamento`
+--
 
 CREATE TABLE `forma_pagamento` (
   `ID_FORMA_PAGAMENTO` bigint(20) UNSIGNED NOT NULL,
@@ -67,7 +78,6 @@ INSERT INTO `forma_pagamento` (`ID_FORMA_PAGAMENTO`, `NOME`, `TIPO`, `ATIVO`) VA
 (5, 'TICKET', 'BENEFICIO', 1),
 (6, 'DINHEIRO', 'DINHEIRO', 1),
 (7, 'PIX', 'PIX', 1),
-(8, 'TRANSFERÊNCIA BANCÁRIA', 'TRANSFERENCIA', 1);
 
 -- --------------------------------------------------------
 
@@ -93,6 +103,7 @@ CREATE TABLE `lancamento` (
   `ATUALIZADO_EM` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
 -- --------------------------------------------------------
 
 --
@@ -113,6 +124,19 @@ CREATE TABLE `meta` (
   `CRIADO_EM` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `meta_gasto`
+--
+
+CREATE TABLE `meta_gasto` (
+  `ID_USUARIO` bigint(20) UNSIGNED NOT NULL,
+  `VALOR_LIMITE` decimal(13,2) NOT NULL,
+  `DATA_INICIO` date NOT NULL,
+  `DIAS` tinyint(3) UNSIGNED NOT NULL,
+  `ATUALIZADO_EM` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -128,7 +152,6 @@ CREATE TABLE `recuperacao_senha` (
   `UTILIZADO` tinyint(1) NOT NULL DEFAULT 0,
   `CRIADO_EM` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 
 -- --------------------------------------------------------
 
@@ -186,6 +209,12 @@ ALTER TABLE `lancamento`
 ALTER TABLE `meta`
   ADD PRIMARY KEY (`ID_META`),
   ADD KEY `IDX_META_USUARIO_STATUS` (`ID_USUARIO`,`STATUS`);
+
+--
+-- Índices de tabela `meta_gasto`
+--
+ALTER TABLE `meta_gasto`
+  ADD PRIMARY KEY (`ID_USUARIO`);
 
 --
 -- Índices de tabela `recuperacao_senha`
@@ -280,23 +309,16 @@ ALTER TABLE `meta`
   ADD CONSTRAINT `META_USUARIO_FK` FOREIGN KEY (`ID_USUARIO`) REFERENCES `usuario` (`ID_USUARIO`) ON DELETE CASCADE;
 
 --
+-- Restrições para tabelas `meta_gasto`
+--
+ALTER TABLE `meta_gasto`
+  ADD CONSTRAINT `META_GASTO_USUARIO_FK` FOREIGN KEY (`ID_USUARIO`) REFERENCES `usuario` (`ID_USUARIO`) ON DELETE CASCADE;
+
+--
 -- Restrições para tabelas `recuperacao_senha`
 --
 ALTER TABLE `recuperacao_senha`
   ADD CONSTRAINT `FK_RECUPERACAO_USUARIO` FOREIGN KEY (`ID_USUARIO`) REFERENCES `usuario` (`ID_USUARIO`) ON DELETE CASCADE;
---
--- Estrutura para tabela `meta_gasto` (meta de gasto por usuário)
---
-CREATE TABLE IF NOT EXISTS `meta_gasto` (
-  `ID_USUARIO` bigint(20) UNSIGNED NOT NULL,
-  `VALOR_LIMITE` decimal(13,2) NOT NULL,
-  `DATA_INICIO` date NOT NULL,
-  `DIAS` tinyint(3) UNSIGNED NOT NULL,
-  `ATUALIZADO_EM` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`ID_USUARIO`),
-  CONSTRAINT `META_GASTO_USUARIO_FK` FOREIGN KEY (`ID_USUARIO`) REFERENCES `usuario` (`ID_USUARIO`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
