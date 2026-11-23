@@ -1298,3 +1298,15 @@
 
 /* Coluna Parcelado: o texto "10x de R$ 120,00" não quebra de linha */
 .tag-nowrap{white-space:nowrap}
+
+/* ===== Data no formato dd/mm/aaaa ===== */
+.date-br { position: relative; display: block; width: 100%; }
+.date-br > input.date-br-text { width: 100%; box-sizing: border-box; padding-right: 2.6rem; }
+.date-br > input.date-br-native {
+  position: absolute; right: 0; bottom: 0; width: 1px; height: 1px;
+  opacity: 0; pointer-events: none; border: 0; padding: 0;
+}
+.date-br-btn {
+  position: absolute; right: .7rem; top: 50%; transform: translateY(-50%);
+  background: none; border: 0; padding: 4px; cursor: pointer; color: inherit; line-height: 0;
+}

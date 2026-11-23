@@ -39,6 +39,166 @@ let searchTerm = '';
 // UTILITÁRIOS
 // ==========================================
 
+/* ===== Data no formato dd/mm/aaaa ===== */
+(function () {
+  'use strict';
+
+  var valueDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+
+  function isoToBr(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : '';
+  }
+
+  function brToIso(br) {
+    var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(br || '');
+    if (!m) return '';
+    var d = +m[1], mo = +m[2], y = +m[3];
+    var dt = new Date(y, mo - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return '';
+    return m[3] + '-' + m[2] + '-' + m[1];
+  }
+
+  function mask(v) {
+    var n = v.replace(/\D/g, '').slice(0, 8);
+    var out = n.slice(0, 2);
+    if (n.length > 2) out += '/' + n.slice(2, 4);
+    if (n.length > 4) out += '/' + n.slice(4);
+    return out;
+  }
+
+  var COPY_PROPS = [
+    'padding', 'border', 'borderRadius', 'background', 'color',
+    'fontFamily', 'fontSize', 'fontWeight', 'height', 'lineHeight'
+  ];
+
+  function enhance(native) {
+    if (native.dataset.brDate) return;
+    native.dataset.brDate = '1';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'date-br';
+
+    var text = document.createElement('input');
+    text.type = 'text';
+    text.className = (native.className ? native.className + ' ' : '') + 'date-br-text';
+    text.placeholder = 'dd/mm/aaaa';
+    text.maxLength = 10;
+    text.inputMode = 'numeric';
+    text.autocomplete = 'off';
+    text.required = native.required;
+    text.disabled = native.disabled;
+
+    // Copia o visual do campo nativo para o campo de texto ficar idêntico
+    try {
+      var cs = getComputedStyle(native);
+      COPY_PROPS.forEach(function (p) {
+        if (cs[p] && cs[p] !== 'auto') text.style[p] = cs[p];
+      });
+    } catch (e) { /* ignora */ }
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'date-br-btn';
+    btn.tabIndex = -1;
+    btn.setAttribute('aria-label', 'Abrir calendário');
+    btn.innerHTML =
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
+
+    native.parentNode.insertBefore(wrap, native);
+    wrap.appendChild(text);
+    wrap.appendChild(btn);
+    wrap.appendChild(native);
+
+    native.classList.add('date-br-native');
+    native.tabIndex = -1;
+    native.setAttribute('aria-hidden', 'true');
+    native.required = false; // a validação passa a ser do campo de texto
+
+    function validate() {
+      var v = text.value;
+      if (v && !brToIso(v)) text.setCustomValidity('Data inválida. Use dd/mm/aaaa.');
+      else text.setCustomValidity('');
+    }
+
+    function syncFromNative() {
+      text.value = isoToBr(valueDesc.get.call(native));
+      validate();
+    }
+
+    // Quando o código existente faz input.value = '2026-11-23', o texto atualiza sozinho.
+    Object.defineProperty(native, 'value', {
+      configurable: true,
+      get: function () { return valueDesc.get.call(this); },
+      set: function (v) { valueDesc.set.call(this, v); syncFromNative(); }
+    });
+
+    function fire(el, type) {
+      el.dispatchEvent(new Event(type, { bubbles: true }));
+    }
+
+    text.addEventListener('input', function () {
+      text.value = mask(text.value);
+      var iso = brToIso(text.value);
+      valueDesc.set.call(native, iso); // vazio enquanto incompleto/inválido
+      validate();
+      fire(native, 'input');
+      fire(native, 'change');
+    });
+
+    // Seletor de calendário nativo (devolve AAAA-MM-DD, mostrado como dd/mm/aaaa)
+    native.addEventListener('change', function () {
+      if (document.activeElement !== text) syncFromNative();
+    });
+    btn.addEventListener('click', function () {
+      if (text.disabled) return;
+      try {
+        if (typeof native.showPicker === 'function') native.showPicker();
+        else { native.focus(); native.click(); }
+      } catch (e) { text.focus(); }
+    });
+
+    // Clicar no <label for="id-do-date"> foca o campo visível
+    if (native.id) {
+      var labels = document.querySelectorAll('label[for="' + native.id + '"]');
+      labels.forEach(function (l) {
+        l.addEventListener('click', function (ev) { ev.preventDefault(); text.focus(); });
+      });
+    }
+
+    // form.reset() restaura o valor padrão sem chamar o setter
+    if (native.form) {
+      native.form.addEventListener('reset', function () { setTimeout(syncFromNative, 0); });
+    }
+
+    syncFromNative();
+  }
+
+  function scan(root) {
+    (root || document).querySelectorAll('input[type="date"]:not([data-br-date])').forEach(enhance);
+  }
+
+  function init() {
+    scan(document);
+    // Modais criados/renderizados depois também são cobertos
+    new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        m.addedNodes.forEach(function (n) {
+          if (n.nodeType !== 1) return;
+          if (n.matches && n.matches('input[type="date"]')) enhance(n);
+          else if (n.querySelectorAll) scan(n);
+        });
+      });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
+
 // Atalho para buscar elemento por id.
 function $(id) {
     return document.getElementById(id);
